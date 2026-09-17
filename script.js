@@ -264,9 +264,6 @@ function openSongTeclado(id) {
         transBadge.textContent = song.key || 'Original';
     }
 
-    // Curadoria discreta
-    populateCatSelect('t-cat-select', song.type);
-
     // Letra
     const content = document.getElementById('sv-content-teclado');
     content.style.fontSize = App.fontSize + 'px';
