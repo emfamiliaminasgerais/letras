@@ -8,7 +8,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <!-- Firebase SDKs compatíveis para sincronização em tempo real na nuvem -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
 <body>
     <div id="blob"></div>
@@ -55,6 +58,10 @@
             <button id="btn-toggle-sidebar" class="btn" style="padding:4px 10px; font-size:0.8rem;" onclick="toggleSidebar()">
                 ☰ Menu
             </button>
+            <div id="cloud-sync-indicator" class="cloud-sync-badge" title="Sincronização em Nuvem (Firebase Ativo)">
+                <span class="sync-dot"></span>
+                <span class="sync-label">Nuvem Conectada</span>
+            </div>
         </div>
 
         <div class="header-right">
@@ -280,8 +287,8 @@
         </div>
     </div>
 
-    <!-- Scripts (100% Offline) -->
+    <!-- Scripts (100% Offline + Sincronização em Nuvem) -->
     <script src="data/songs-data.js"></script>
-    <script src="script.js?v=1.0.1"></script>
+    <script src="script.js?v=1.1.0"></script>
 </body>
 </html>

@@ -134,6 +134,34 @@ body {
 .current-mode-pill:hover { background: rgba(255,255,255,0.09); }
 .current-mode-pill.mode-teclado { border-color: rgba(59,130,246,0.4); color: #60a5fa; }
 .current-mode-pill.mode-pulpito { border-color: rgba(251,191,36,0.4); color: #fbbf24; }
+
+/* Indicador de sincronização em nuvem Firebase */
+.cloud-sync-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.28);
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 600; color: #34d399;
+    user-select: none; transition: all 0.3s ease;
+}
+.cloud-sync-badge.syncing {
+    border-color: rgba(251, 191, 36, 0.4); color: #fbbf24; background: rgba(251, 191, 36, 0.08);
+}
+.cloud-sync-badge.error {
+    border-color: rgba(239, 68, 68, 0.4); color: #f87171; background: rgba(239, 68, 68, 0.08);
+}
+.sync-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background-color: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    display: inline-block;
+}
+.cloud-sync-badge.syncing .sync-dot {
+    background-color: #f59e0b; box-shadow: 0 0 8px #f59e0b;
+}
+.cloud-sync-badge.error .sync-dot {
+    background-color: #ef4444; box-shadow: 0 0 8px #ef4444;
+}
+
 .header-right { display: flex; align-items: center; gap: 8px; }
 
 .btn {

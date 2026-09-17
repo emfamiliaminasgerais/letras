@@ -49,12 +49,157 @@ function esc(t) {
 function sp(k, v) { localStorage.setItem(k, v); }
 
 // ================================================================
+// CONFIGURAÇÃO DO FIREBASE (SINCRONIZAÇÃO EM NUVEM)
+// ================================================================
+const firebaseConfig = {
+    apiKey: "AIzaSyDlmeAqQ8CQ_i_-wTwSLpsK4FMwVT2x930",
+    authDomain: "letrassantuario.firebaseapp.com",
+    projectId: "letrassantuario",
+    storageBucket: "letrassantuario.firebasestorage.app",
+    messagingSenderId: "204414230548",
+    appId: "1:204414230548:web:3a79751c65b77619444701"
+};
+
+let firestoreDb = null;
+let isCloudSyncing = false;
+
+function initFirebase() {
+    if (typeof firebase === 'undefined') {
+        updateSyncIndicator('offline', 'Modo Local (Offline)');
+        return;
+    }
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        firestoreDb = firebase.firestore();
+        updateSyncIndicator('connected', 'Nuvem Conectada');
+        setupFirestoreListeners();
+    } catch (e) {
+        console.warn('Erro ao inicializar Firebase:', e);
+        updateSyncIndicator('error', 'Falha na Nuvem');
+    }
+}
+
+function updateSyncIndicator(status, text) {
+    const el = document.getElementById('cloud-sync-indicator');
+    if (!el) return;
+    el.className = 'cloud-sync-badge';
+    if (status === 'syncing') el.classList.add('syncing');
+    if (status === 'error') el.classList.add('error');
+    const label = el.querySelector('.sync-label');
+    if (label) label.textContent = text || (status === 'connected' ? 'Nuvem Conectada' : 'Offline');
+}
+
+// Escuta alterações do Firestore em tempo real (Celular, PC 1, PC 2)
+function setupFirestoreListeners() {
+    if (!firestoreDb) return;
+
+    const docRef = firestoreDb.collection('letras_app').doc('workspace');
+
+    docRef.onSnapshot(docSnap => {
+        if (!docSnap.exists) {
+            // Se o documento ainda não existir na nuvem, salva o estado inicial local
+            pushFullStateToCloud();
+            return;
+        }
+
+        const data = docSnap.data() || {};
+        let changed = false;
+
+        // 1. Sincroniza Categorias
+        if (Array.isArray(data.categories) && data.categories.length) {
+            App.categories = data.categories;
+            sp('letras_categories', JSON.stringify(App.categories));
+            changed = true;
+        }
+
+        // 2. Sincroniza Curadoria (tom, categoria de cada música)
+        if (data.curadoria && typeof data.curadoria === 'object') {
+            App.curadoriaData = data.curadoria;
+            sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
+
+            // Aplica nas músicas em memória
+            App.allSongs.forEach(song => {
+                const cur = App.curadoriaData[song.id];
+                if (cur) {
+                    if (cur.type !== undefined) song.type = cur.type;
+                    if (cur.key !== undefined) song.key = cur.key;
+                }
+            });
+            changed = true;
+        }
+
+        // 3. Sincroniza Setlist do Culto
+        if (Array.isArray(data.setlist)) {
+            App.cultoSetlist = data.setlist;
+            sp('letras_setlist', JSON.stringify(App.cultoSetlist));
+            changed = true;
+        }
+
+        if (changed) {
+            updateWelcomeStats();
+            renderTecladoChips();
+            renderSidebarPulpito();
+            applyFiltersTeclado();
+            applyFiltersPulpito();
+            renderSetlistPanel();
+            renderCultoDrawerList();
+            renderPulpitoGrid();
+
+            if (App.currentSongTeclado) {
+                renderSongCategoriesChips(App.currentSongTeclado);
+                syncSetlistBtn(App.currentSongTeclado.id);
+            }
+            if (App.currentSongPulpito) {
+                syncCultoBtn(App.currentSongPulpito.id);
+            }
+            updateSyncIndicator('connected', 'Sincronizado');
+        }
+    }, err => {
+        console.warn('Erro no listener do Firestore:', err);
+        updateSyncIndicator('error', 'Erro de Sincronia');
+    });
+}
+
+// Salva alterações na nuvem de forma assíncrona
+async function pushToCloud(field, value) {
+    if (!firestoreDb) return;
+    updateSyncIndicator('syncing', 'Salvando...');
+    try {
+        await firestoreDb.collection('letras_app').doc('workspace').set({
+            [field]: value,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+        setTimeout(() => updateSyncIndicator('connected', 'Nuvem Conectada'), 800);
+    } catch (e) {
+        console.warn('Erro ao salvar no Firestore:', e);
+        updateSyncIndicator('error', 'Erro ao Salvar');
+    }
+}
+
+async function pushFullStateToCloud() {
+    if (!firestoreDb) return;
+    try {
+        await firestoreDb.collection('letras_app').doc('workspace').set({
+            categories: App.categories,
+            curadoria: App.curadoriaData,
+            setlist: App.cultoSetlist,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+    } catch (e) {
+        console.warn('Erro ao inicializar workspace no Firestore:', e);
+    }
+}
+
+// ================================================================
 // INICIALIZAÇÃO
 // ================================================================
 document.addEventListener('DOMContentLoaded', async () => {
     loadPrefs();
     await loadCatalog();
     setupSearch();
+    initFirebase();
 
     const hasChosen = localStorage.getItem('letras_has_mode');
     if (hasChosen) {
@@ -78,9 +223,18 @@ function loadPrefs() {
     }
 }
 
-function saveCuradoria() { sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData)); }
-function saveSetlist()   { sp('letras_setlist',       JSON.stringify(App.cultoSetlist)); }
-function saveCats()      { sp('letras_categories',    JSON.stringify(App.categories));   }
+function saveCuradoria() {
+    sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
+    pushToCloud('curadoria', App.curadoriaData);
+}
+function saveSetlist() {
+    sp('letras_setlist', JSON.stringify(App.cultoSetlist));
+    pushToCloud('setlist', App.cultoSetlist);
+}
+function saveCats() {
+    sp('letras_categories', JSON.stringify(App.categories));
+    pushToCloud('categories', App.categories);
+}
 
 // ================================================================
 // CARREGAMENTO DO CATÁLOGO
