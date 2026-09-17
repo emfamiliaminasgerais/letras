@@ -1,0 +1,61 @@
+﻿{
+  "id": 1788093342550,
+  "title": "Eu não Desisto²¬",
+  "artist": "",
+  "author": "",
+  "note": "",
+  "copyright": "",
+  "language": "",
+  "key": "",
+  "bpm": 0.0,
+  "time_sig": "",
+  "midi": null,
+  "order": "",
+  "arrangements": [],
+  "lyrics": {
+    "full_text": "É QUE EU NÃO DESISTO \nDE VOCÊ, MEU FILHO\nE SE FOR PRECISO\nEU ENTRO NO MEIO DA GUERRA \nSÓ PARA TE LEMBRAR\n\nQUE NUNCA DESISTO \nDE VOCÊ, MEU FILHO\nE SE FOR PRECISO\nEU ENTRO NO MEIO DA GUERRA \nSÓ PARA TE AJUDAR\n\nSE APOIE EM MEUS OMBROS, \nNÃO SOLTA, NÓS VAMOS LUTAR",
+    "full_text_with_comment": null,
+    "paragraphs": [
+      {
+        "number": 1,
+        "description": "",
+        "text": "É QUE EU NÃO DESISTO \nDE VOCÊ, MEU FILHO\nE SE FOR PRECISO\nEU ENTRO NO MEIO DA GUERRA \nSÓ PARA TE LEMBRAR",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 2,
+        "description": "",
+        "text": "QUE NUNCA DESISTO \nDE VOCÊ, MEU FILHO\nE SE FOR PRECISO\nEU ENTRO NO MEIO DA GUERRA \nSÓ PARA TE AJUDAR",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 3,
+        "description": "",
+        "text": "SE APOIE EM MEUS OMBROS, \nNÃO SOLTA, NÓS VAMOS LUTAR",
+        "text_with_comment": null,
+        "translations": null
+      }
+    ]
+  },
+  "streaming": {
+    "audio": {
+      "spotify": "",
+      "youtube": "",
+      "deezer": "",
+      "apple_music": "",
+      "amazon_music": ""
+    },
+    "backing_track": {
+      "spotify": "",
+      "youtube": "",
+      "deezer": "",
+      "apple_music": "",
+      "amazon_music": ""
+    }
+  },
+  "extras": {
+    "extra": ""
+  }
+}

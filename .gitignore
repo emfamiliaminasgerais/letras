@@ -1,0 +1,4 @@
+# Arquivos compactados e temporários
+*.zip
+*.rar
+extract.ps1

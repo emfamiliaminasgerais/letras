@@ -1,0 +1,75 @@
+﻿{
+  "id": 1786882223725,
+  "title": "YAHWEH SE MANIFESTARÁ",
+  "artist": "",
+  "author": "",
+  "note": "",
+  "copyright": "",
+  "language": "",
+  "key": "",
+  "bpm": 0.0,
+  "time_sig": "",
+  "midi": null,
+  "order": "",
+  "arrangements": [],
+  "lyrics": {
+    "full_text": "YAHWEH, RAFAH\nELOHIM, EL SHADDAI\nJIREH, ADONAI\nSE MANIFESTARÁ\n\nEm minha vida se manifestará\nEm minha vida se manifestará\nCom teu Espírito me envolverá\n\nJesus, Senhor\nBom Pastor, Emanuel\nPão Vivo, Salvador\nEle Voltará\n\nYAHWEH, RAFAH\nELOHIM, EL SHADDAI\nJIREH, ADONAI\nELE VOLTARá\n\nEm minha vida se manifestará\nEm minha casa se manifestará\nCom teu Espírito me envolverá",
+    "full_text_with_comment": null,
+    "paragraphs": [
+      {
+        "number": 1,
+        "description": "",
+        "text": "YAHWEH, RAFAH\nELOHIM, EL SHADDAI\nJIREH, ADONAI\nSE MANIFESTARÁ",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 2,
+        "description": "",
+        "text": "Em minha vida se manifestará\nEm minha vida se manifestará\nCom teu Espírito me envolverá",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 3,
+        "description": "",
+        "text": "Jesus, Senhor\nBom Pastor, Emanuel\nPão Vivo, Salvador\nEle Voltará",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 4,
+        "description": "",
+        "text": "YAHWEH, RAFAH\nELOHIM, EL SHADDAI\nJIREH, ADONAI\nELE VOLTARá",
+        "text_with_comment": null,
+        "translations": null
+      },
+      {
+        "number": 5,
+        "description": "",
+        "text": "Em minha vida se manifestará\nEm minha casa se manifestará\nCom teu Espírito me envolverá",
+        "text_with_comment": null,
+        "translations": null
+      }
+    ]
+  },
+  "streaming": {
+    "audio": {
+      "spotify": "",
+      "youtube": "",
+      "deezer": "",
+      "apple_music": "",
+      "amazon_music": ""
+    },
+    "backing_track": {
+      "spotify": "",
+      "youtube": "",
+      "deezer": "",
+      "apple_music": "",
+      "amazon_music": ""
+    }
+  },
+  "extras": {
+    "extra": ""
+  }
+}

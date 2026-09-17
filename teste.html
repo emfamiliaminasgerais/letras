@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Letras</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="blob"></div>
+
+    <!-- ====================================================
+         MENU PRÉVIO DE SELEÇÃO DE MODO
+         ==================================================== -->
+    <div id="mode-selection-overlay" class="mode-selection-overlay">
+        <div class="mode-selection-box">
+            <h1>Letras</h1>
+            <p>Selecione o modo de uso da aplicação:</p>
+            <div class="mode-buttons">
+                <button class="btn-mode-card teclado-card" onclick="chooseMode('teclado')">
+                    <span class="mode-card-icon">🎹</span>
+                    <div class="mode-card-text">
+                        <strong>Modo Teclado</strong>
+                        <span>Pesquisa rápida, visualização limpa e setlist lateral</span>
+                    </div>
+                </button>
+                <button class="btn-mode-card pulpito-card" onclick="chooseMode('pulpito')">
+                    <span class="mode-card-icon">📖</span>
+                    <div class="mode-card-text">
+                        <strong>Modo Púlpito</strong>
+                        <span>Categorias na barra lateral, grade de músicas e leitura em 2 colunas</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ====================================================
+         HEADER SUPERIOR
+         ==================================================== -->
+    <header class="app-header">
+        <div class="header-left">
+            <div class="brand" onclick="openModeModal()" title="Trocar de modo">
+                <div class="brand-logo">🎵</div>
+                <div class="brand-title">Letras</div>
+            </div>
+            <button id="current-mode-pill" class="current-mode-pill mode-teclado" onclick="openModeModal()" title="Clique para trocar o modo">
+                <span id="mode-pill-text">🎹 Modo Teclado</span>
+                <span style="font-size:0.7rem;opacity:0.6;">(trocar)</span>
+            </button>
+            <button id="btn-toggle-sidebar" class="btn" style="padding:4px 10px; font-size:0.8rem;" onclick="toggleSidebar()">
+                ☰ Menu
+            </button>
+        </div>
+
+        <div class="header-right">
+            <!-- Controles rápidos globais de fonte -->
+            <div style="display:flex; align-items:center; gap:4px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); border-radius:8px; padding:2px 6px;">
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; margin-right:4px;">Fonte:</span>
+                <button class="tool-btn" style="min-width:30px; height:28px; font-size:0.8rem;" onclick="adjustFontSize(-1)">A-</button>
+                <span id="global-font-display" class="font-size-badge" style="font-size:0.75rem; min-width:32px;">15px</span>
+                <button class="tool-btn" style="min-width:30px; height:28px; font-size:0.8rem;" onclick="adjustFontSize(1)">A+</button>
+            </div>
+
+            <!-- Botão 2 Colunas -->
+            <button id="btn-toggle-columns" class="btn" onclick="toggleColumns()" title="Alternar 1 ou 2 colunas">
+                📖 2 Colunas
+            </button>
+
+            <!-- Botão Gaveta do Culto (no modo Púlpito) -->
+            <button id="btn-open-culto" class="btn btn-accent" style="display:none;" onclick="toggleCultoDrawer()">
+                📋 Culto <span id="culto-count-badge" style="background:rgba(0,0,0,0.25);padding:1px 7px;border-radius:10px;font-size:0.75rem;font-weight:700;">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ====================================================
+         CORPO DA APLICAÇÃO
+         ==================================================== -->
+    <div class="app-body">
+
+        <!-- =============================================
+             SIDEBAR MODO TECLADO (ESTILO CIFRACEROS)
+             ============================================= -->
+        <aside id="sidebar-teclado" class="sidebar teclado-sidebar">
+            <div class="sidebar-content-teclado">
+                <div class="sidebar-sticky-header">
+                    <!-- Campo de pesquisa idêntico ao CifrasCeros -->
+                    <input type="text" id="search-input-teclado" placeholder="Pesquisar título ou trecho..." autocomplete="off">
+                    
+                    <!-- Criação rápida e botão gerenciar categorias -->
+                    <div class="category-create-bar">
+                        <input type="text" id="new-cat-input" placeholder="Nova Categoria..." onkeydown="if(event.key==='Enter') createCategoryFromInput()">
+                        <button class="btn-cat-create" onclick="createCategoryFromInput()">＋ Criar</button>
+                        <button class="btn-cat-manage" onclick="openCategoryModal()" title="Gerenciar todas as categorias">⚙️</button>
+                    </div>
+
+                    <!-- Chips de categoria/playlist estilo CifrasCeros -->
+                    <div id="teclado-chips-container" class="playlist-chips-container"></div>
+                </div>
+
+                <!-- Lista de músicas idêntica ao CifrasCeros -->
+                <div id="results-container-teclado" class="results-container-teclado">
+                    <div style="padding:20px; text-align:center; color:var(--text-muted);">Carregando catálogo...</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- =============================================
+             ÁREA CENTRAL — MODO TECLADO (CIFRACEROS)
+             ============================================= -->
+        <main id="main-teclado" class="teclado-main">
+            <div class="teclado-center-scroll">
+                <!-- Welcome View (quando nenhuma música está aberta) -->
+                <div id="welcome-view-teclado">
+                    <h1>🎹 Modo Teclado</h1>
+                    <p>Selecione uma música na lista ao lado para começar.</p>
+                    <div class="welcome-stats-cifras">
+                        <div class="welcome-stat-pill">
+                            <strong id="stat-total-songs">–</strong>
+                            <span>Músicas no Acervo</span>
+                        </div>
+                        <div class="welcome-stat-pill">
+                            <strong id="stat-curated-songs">–</strong>
+                            <span>Categorizadas</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card da Música (quando uma música é selecionada) -->
+                <div id="song-view-teclado">
+                    <div class="song-header-cifras">
+                        <h1 id="t-sv-title" class="song-title-cifras">Título da Música</h1>
+                    </div>
+
+                    <!-- Barra de ferramentas idêntica ao CifrasCeros -->
+                    <div class="song-tools-cifras">
+                        <div class="tool-group" id="t-transpose-group">
+                            <span class="tool-label">Tom:</span>
+                            <div id="t-transpose-badge" class="transpose-badge-cifras" title="Clique para editar o tom" onclick="promptEditKey()">G</div>
+                        </div>
+
+                        <div class="tool-group">
+                            <span class="tool-label">Fonte:</span>
+                            <button class="tool-btn" onclick="adjustFontSize(-1)" title="Diminuir fonte">A-</button>
+                            <span id="t-font-size-display" class="font-size-badge">13.5px</span>
+                            <button class="tool-btn" onclick="adjustFontSize(1)" title="Aumentar fonte">A+</button>
+                        </div>
+
+                        <div class="tool-group">
+                            <button id="btn-t-toggle-columns" class="tool-btn active" onclick="toggleColumns()" title="Dividir em 2 colunas">
+                                📖 2 Colunas
+                            </button>
+                        </div>
+
+                        <div class="tool-group">
+                            <button id="btn-t-add-setlist" class="btn btn-accent" onclick="toggleTecladoSetlist()">
+                                ＋ Setlist
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Barra de categorias da música (idêntica ao CifrasCeros) -->
+                    <div class="song-playlists-bar">
+                        <span class="tool-label" style="font-size:0.75rem; margin-right:4px;">Categorias:</span>
+                        <div id="song-categories-chips" style="display:flex; flex-wrap:wrap; gap:6px; align-items:center;"></div>
+                    </div>
+
+                    <!-- Conteúdo da Letra em 2 Colunas (Compacto e Elegante) -->
+                    <div id="sv-content-teclado" class="two-columns"></div>
+                </div>
+            </div>
+
+
+            <!-- Setlist / Ordem à Direita (idêntico ao CifrasCeros) -->
+            <aside id="right-sidebar" class="right-sidebar">
+                <div class="setlist-header">
+                    <h3>Setlist / Ordem</h3>
+                    <button class="btn btn-danger" style="padding:4px 10px; font-size:0.78rem;" onclick="clearCulto()">Limpar</button>
+                </div>
+                <div id="setlist-container" class="setlist-container"></div>
+            </aside>
+        </main>
+
+        <!-- =============================================
+             MODO PÚLPITO (WIREFRAME SOLICITADO)
+             ============================================= -->
+        <aside id="sidebar-pulpito" class="sidebar pulpito-sidebar" style="display:none;">
+            <div class="sidebar-header-pulpito">
+                <input type="text" id="search-input-pulpito" placeholder="Pesquisar..." autocomplete="off">
+            </div>
+            <div class="pulpito-tabs-row">
+                <button id="ptab-todas" class="pulpito-tab-btn active" onclick="setPulpitoTab('todas')">📁 Todas</button>
+                <button id="ptab-culto" class="pulpito-tab-btn" onclick="setPulpitoTab('culto')">
+                    ⭐ Culto (<span id="ptab-culto-badge">0</span>)
+                </button>
+            </div>
+            <div id="pulpito-cat-list" class="pulpito-category-list"></div>
+            <div class="pulpito-sidebar-footer">
+                <button class="btn" style="width:100%; justify-content:center; font-size:0.82rem;" onclick="toggleCultoDrawer()">
+                    📋 Ver Repertório do Culto
+                </button>
+            </div>
+        </aside>
+
+        <!-- Área Principal Modo Púlpito -->
+        <main id="main-pulpito" class="main-content" style="display:none;">
+            <!-- Estado 1: Grade de Cards -->
+            <div id="pulpito-grid-view" class="pulpito-grid-view">
+                <div class="grid-context-bar">
+                    <div class="grid-context-title">
+                        <span id="p-grid-title">Todas as Músicas</span>
+                        <span id="p-grid-count" class="grid-context-count">0 músicas</span>
+                    </div>
+                </div>
+                <div id="songs-grid-pulpito" class="songs-grid">
+                    <div class="grid-empty-state">Carregando...</div>
+                </div>
+            </div>
+
+            <!-- Estado 2: Visualizador da Letra em 2 Colunas -->
+            <div id="viewer-pulpito">
+                <div class="pulpito-viewer-header">
+                    <div>
+                        <h1 id="p-viewer-title">–</h1>
+                        <div style="font-size:0.85rem; color:var(--text-muted); margin-top:3px;">
+                            <span id="p-viewer-artist">–</span>
+                            <span id="p-viewer-key" class="transpose-badge-cifras" style="display:none; margin-left:8px; padding:2px 8px; font-size:0.75rem;"></span>
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="btn-back-grid" onclick="closePulpitoViewer()">← Voltar</button>
+                        <button id="btn-viewer-culto" class="btn btn-primary" onclick="toggleViewerCulto()">
+                            ➕ Adicionar ao Culto
+                        </button>
+                    </div>
+                </div>
+                <div class="pulpito-lyrics-scroll">
+                    <div id="p-lyrics-content" class="lyrics-content-pulpito two-columns"></div>
+                </div>
+            </div>
+        </main>
+
+    </div><!-- fim .app-body -->
+
+    <!-- Gaveta do Culto (Modo Púlpito) -->
+    <div id="culto-drawer" class="culto-drawer">
+        <div class="culto-drawer-header">
+            <div class="culto-drawer-title">📋 Repertório do Culto</div>
+            <div style="display:flex; gap:6px;">
+                <button class="btn" style="padding:3px 8px; font-size:0.76rem; color:var(--error-color);" onclick="clearCulto()">Limpar</button>
+                <button class="btn" style="padding:3px 9px; font-size:0.8rem;" onclick="toggleCultoDrawer()">✕</button>
+            </div>
+        </div>
+        <div id="culto-list-container" class="culto-list"></div>
+    </div>
+
+    <!-- Modal de Gerenciamento de Categorias -->
+    <div id="modal-categories" class="modal-backdrop" onclick="if(event.target===this) closeCategoryModal()">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>⚙️ Gerenciar Categorias</h3>
+                <button class="tool-btn" onclick="closeCategoryModal()" style="min-width:28px; height:28px;">✕</button>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 14px 0;">
+                Crie, renomeie ou remova as categorias do repertório:
+            </p>
+            <div class="category-create-bar" style="margin-bottom:14px;">
+                <input type="text" id="modal-new-cat-input" placeholder="Nova categoria..." onkeydown="if(event.key==='Enter') createCategoryFromModal()">
+                <button class="btn-cat-create" onclick="createCategoryFromModal()">＋ Adicionar</button>
+            </div>
+            <div id="modal-categories-list" class="modal-cat-list"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button class="btn" onclick="closeCategoryModal()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (100% Offline) -->
+    <script src="data/songs-data.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
