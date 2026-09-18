@@ -573,7 +573,6 @@ function renderPulpitoGrid() {
                 <div class="song-card-title">${esc(song.title)}</div>
                 <div class="song-card-artist">${esc(song.artist || 'Artista desconhecido')}</div>
                 <div class="song-card-footer">
-                    ${song.key ? `<span class="song-transpose-tag">${esc(song.key)}</span>` : ''}
                     <button class="card-culto-btn ${inCulto ? 'in-culto' : ''}"
                         onclick="event.stopPropagation(); toggleCulto(${song.id})"
                         title="${inCulto ? 'Remover do Culto' : 'Adicionar ao Culto'}">
@@ -599,8 +598,7 @@ function openSongPulpito(id) {
     document.getElementById('p-viewer-artist').textContent = song.artist || 'Artista não informado';
     
     const kb = document.getElementById('p-viewer-key');
-    if (song.key) { kb.textContent = 'Tom: ' + song.key; kb.style.display = 'inline'; }
-    else { kb.style.display = 'none'; }
+    if (kb) kb.style.display = 'none';
 
     syncCultoBtn(song.id);
 
@@ -698,7 +696,6 @@ function renderCultoDrawerList() {
             <div class="culto-item" onclick="openSongPulpito(${s.id}); toggleCultoDrawer();">
                 <span class="culto-item-num">#${i+1}</span>
                 <span class="culto-item-title">${esc(s.title)}</span>
-                ${s.key ? `<span class="song-transpose-tag">${esc(s.key)}</span>` : ''}
                 <button class="btn-remove-culto" onclick="event.stopPropagation(); removeCulto(${s.id})" title="Remover">✕</button>
             </div>
         `;
