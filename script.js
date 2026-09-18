@@ -302,6 +302,7 @@ function applyMode(mode) {
     const sbPulpito  = document.getElementById('sidebar-pulpito');
     const mainTeclado = document.getElementById('main-teclado');
     const mainPulpito = document.getElementById('main-pulpito');
+    const rightSidebar = document.getElementById('right-sidebar');
     const btnCulto    = document.getElementById('btn-open-culto');
 
     if (mode === 'teclado') {
@@ -311,6 +312,7 @@ function applyMode(mode) {
         sbPulpito.style.display = 'none';
         mainTeclado.style.display = 'flex';
         mainPulpito.style.display = 'none';
+        if (rightSidebar) rightSidebar.style.display = 'flex';
         btnCulto.style.display    = 'none';
         renderTecladoChips();
         applyFiltersTeclado();
@@ -322,6 +324,7 @@ function applyMode(mode) {
         sbPulpito.style.display = 'flex';
         mainTeclado.style.display = 'none';
         mainPulpito.style.display = 'flex';
+        if (rightSidebar) rightSidebar.style.display = 'none';
         btnCulto.style.display    = 'inline-flex';
         renderSidebarPulpito();
         showPulpitoGrid();
