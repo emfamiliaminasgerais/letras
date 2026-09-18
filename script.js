@@ -376,14 +376,14 @@ function applyFiltersTeclado() {
 function renderSongListTeclado() {
     const container = document.getElementById('results-container-teclado');
     if (!container) return;
-    const slice = App.filteredTeclado.slice(0, 100);
+    const list = App.filteredTeclado;
 
-    if (!slice.length) {
+    if (!list.length) {
         container.innerHTML = '<div style="padding:24px 10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhuma música encontrada.</div>';
         return;
     }
 
-    container.innerHTML = slice.map(song => {
+    container.innerHTML = list.map(song => {
         const isActive = App.currentSongTeclado && App.currentSongTeclado.id === song.id;
         const keyTag = song.key ? `<span class="song-transpose-tag">Tom: ${esc(song.key)}</span>` : '';
 
@@ -395,8 +395,7 @@ function renderSongListTeclado() {
                 </div>
             </div>
         `;
-    }).join('') + (App.filteredTeclado.length > 100
-        ? `<div style="text-align:center; padding:10px; font-size:0.75rem; color:var(--text-subtle);">Mostrando 100 de ${App.filteredTeclado.length}</div>` : '');
+    }).join('');
 }
 
 // Abrir música no Modo Teclado (Card CifrasCeros)
@@ -567,8 +566,7 @@ function renderPulpitoGrid() {
         return;
     }
 
-    const slice = App.filteredPulpito.slice(0, 120);
-    grid.innerHTML = slice.map(song => {
+    grid.innerHTML = App.filteredPulpito.map(song => {
         const inCulto = App.cultoSetlist.includes(song.id);
         return `
             <div class="song-card ${inCulto ? 'in-culto' : ''}" onclick="openSongPulpito(${song.id})">
