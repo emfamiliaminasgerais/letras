@@ -566,6 +566,9 @@ function renderPulpitoGrid() {
         return;
     }
 
+    const ICON_PLUS = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    const ICON_STAR = `<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+
     grid.innerHTML = App.filteredPulpito.map(song => {
         const inCulto = App.cultoSetlist.includes(song.id);
         return `
@@ -576,7 +579,7 @@ function renderPulpitoGrid() {
                     <button class="card-culto-btn ${inCulto ? 'in-culto' : ''}"
                         onclick="event.stopPropagation(); toggleCulto(${song.id})"
                         title="${inCulto ? 'Remover do Culto' : 'Adicionar ao Culto'}">
-                        ${inCulto ? '⭐' : '＋'}
+                        ${inCulto ? ICON_STAR : ICON_PLUS}
                     </button>
                 </div>
             </div>
