@@ -573,6 +573,54 @@ body {
 }
 .modal-cat-actions { display: flex; gap: 6px; }
 
+/* Modal Cadastro de Música */
+.modal-box-large {
+    max-width: 620px;
+    width: 95%;
+}
+.modal-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.modal-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.modal-form-group label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.modal-input, .modal-select, .modal-textarea {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--surface-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-color);
+    font-family: inherit;
+    font-size: 0.88rem;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+.modal-input:focus, .modal-select:focus, .modal-textarea:focus {
+    border-color: var(--chord-color);
+    background: rgba(255, 255, 255, 0.08);
+}
+.modal-select option {
+    background: #0f172a;
+    color: #f8fafc;
+}
+.modal-textarea {
+    resize: vertical;
+    line-height: 1.45;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+}
+
 
 /* ========================================================
    RIGHT SIDEBAR (SETLIST / ORDEM CIFRACEROS)

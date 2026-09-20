@@ -3,6 +3,7 @@
 // ================================================================
 const App = {
     allSongs: [],
+    customSongs: [],
     
     // Modo Teclado
     filteredTeclado: [],
@@ -35,6 +36,9 @@ const App = {
         'Apelo / Altar',
     ]
 };
+
+let baseCatalogSongs = [];
+let isInitialCloudLoadDone = false;
 
 // ================================================================
 // UTILS
@@ -88,7 +92,7 @@ function updateSyncIndicator(status, text) {
     if (status === 'syncing') el.classList.add('syncing');
     if (status === 'error') el.classList.add('error');
     const label = el.querySelector('.sync-label');
-    if (label) label.textContent = text || (status === 'connected' ? 'Nuvem Conectada' : 'Offline');
+    if (label) label.textContent = text || (status === 'connected' ? 'Sincronizado' : 'Offline');
 }
 
 // Escuta alterações do Firestore em tempo real (Celular, PC 1, PC 2)
@@ -101,20 +105,30 @@ function setupFirestoreListeners() {
         if (!docSnap.exists) {
             // Se o documento ainda não existir na nuvem, salva o estado inicial local
             pushFullStateToCloud();
+            isInitialCloudLoadDone = true;
+            updateSyncIndicator('connected', 'Sincronizado');
             return;
         }
 
         const data = docSnap.data() || {};
         let changed = false;
 
-        // 1. Sincroniza Categorias
+        // 1. Sincroniza Músicas Personalizadas
+        if (Array.isArray(data.custom_songs)) {
+            App.customSongs = data.custom_songs;
+            sp('letras_custom_songs', JSON.stringify(App.customSongs));
+            rebuildAllSongs();
+            changed = true;
+        }
+
+        // 2. Sincroniza Categorias
         if (Array.isArray(data.categories) && data.categories.length) {
             App.categories = data.categories;
             sp('letras_categories', JSON.stringify(App.categories));
             changed = true;
         }
 
-        // 2. Sincroniza Curadoria (tom, categoria de cada música)
+        // 3. Sincroniza Curadoria (tom, categoria de cada música)
         if (data.curadoria && typeof data.curadoria === 'object') {
             App.curadoriaData = data.curadoria;
             sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
@@ -130,12 +144,15 @@ function setupFirestoreListeners() {
             changed = true;
         }
 
-        // 3. Sincroniza Setlist do Culto
+        // 4. Sincroniza Setlist do Culto
         if (Array.isArray(data.setlist)) {
             App.cultoSetlist = data.setlist;
             sp('letras_setlist', JSON.stringify(App.cultoSetlist));
             changed = true;
         }
+
+        // Marca que o primeiro carregamento da nuvem foi concluído com sucesso
+        isInitialCloudLoadDone = true;
 
         if (changed) {
             updateWelcomeStats();
@@ -154,24 +171,28 @@ function setupFirestoreListeners() {
             if (App.currentSongPulpito) {
                 syncCultoBtn(App.currentSongPulpito.id);
             }
-            updateSyncIndicator('connected', 'Sincronizado');
         }
+        updateSyncIndicator('connected', 'Sincronizado');
     }, err => {
         console.warn('Erro no listener do Firestore:', err);
         updateSyncIndicator('error', 'Erro de Sincronia');
     });
 }
 
-// Salva alterações na nuvem de forma assíncrona
+// Salva alterações na nuvem de forma assíncrona com proteção contra sobrescrita indevida
 async function pushToCloud(field, value) {
     if (!firestoreDb) return;
+    if (!isInitialCloudLoadDone) {
+        console.warn('Aguardando sincronização inicial da nuvem antes de enviar alterações:', field);
+        return;
+    }
     updateSyncIndicator('syncing', 'Salvando...');
     try {
         await firestoreDb.collection('letras_app').doc('workspace').set({
             [field]: value,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }, { merge: true });
-        setTimeout(() => updateSyncIndicator('connected', 'Nuvem Conectada'), 800);
+        setTimeout(() => updateSyncIndicator('connected', 'Sincronizado'), 800);
     } catch (e) {
         console.warn('Erro ao salvar no Firestore:', e);
         updateSyncIndicator('error', 'Erro ao Salvar');
@@ -182,6 +203,7 @@ async function pushFullStateToCloud() {
     if (!firestoreDb) return;
     try {
         await firestoreDb.collection('letras_app').doc('workspace').set({
+            custom_songs: App.customSongs,
             categories: App.categories,
             curadoria: App.curadoriaData,
             setlist: App.cultoSetlist,
@@ -212,10 +234,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function loadPrefs() {
     try {
-        const c = localStorage.getItem('letras_curadoria_v1');  if (c) App.curadoriaData = JSON.parse(c);
-        const s = localStorage.getItem('letras_setlist');        if (s) App.cultoSetlist   = JSON.parse(s);
-        const cats = localStorage.getItem('letras_categories');  if (cats) App.categories  = JSON.parse(cats);
-        const fs = localStorage.getItem('letras_fontsize');      if (fs) App.fontSize       = parseInt(fs, 10);
+        const cs = localStorage.getItem('letras_custom_songs');  if (cs) App.customSongs   = JSON.parse(cs);
+        const c  = localStorage.getItem('letras_curadoria_v1');   if (c)  App.curadoriaData = JSON.parse(c);
+        const s  = localStorage.getItem('letras_setlist');        if (s)  App.cultoSetlist  = JSON.parse(s);
+        const cats = localStorage.getItem('letras_categories');  if (cats) App.categories = JSON.parse(cats);
+        const fs = localStorage.getItem('letras_fontsize');      if (fs) App.fontSize      = parseInt(fs, 10);
         const mode = localStorage.getItem('letras_mode');        if (mode) App.currentMode = mode;
         const cols = localStorage.getItem('letras_columns');     if (cols !== null) App.isTwoColumns = (cols === 'true');
     } catch(e) {
@@ -235,10 +258,42 @@ function saveCats() {
     sp('letras_categories', JSON.stringify(App.categories));
     pushToCloud('categories', App.categories);
 }
+function saveCustomSongs() {
+    sp('letras_custom_songs', JSON.stringify(App.customSongs));
+    pushToCloud('custom_songs', App.customSongs);
+}
 
 // ================================================================
-// CARREGAMENTO DO CATÁLOGO
+// CARREGAMENTO DO CATÁLOGO E RECONSTRUÇÃO
 // ================================================================
+function rebuildAllSongs() {
+    const customList = App.customSongs || [];
+    const baseList = baseCatalogSongs || [];
+
+    // Músicas personalizadas ficam no topo e mesclam curadoria se houver
+    const mergedCustom = customList.map(song => {
+        const cur = App.curadoriaData[song.id] || {};
+        return {
+            ...song,
+            isCustom: true,
+            type: cur.type || song.type || '',
+            key: cur.key !== undefined ? cur.key : (song.key || '')
+        };
+    });
+
+    const mergedBase = baseList.map(song => {
+        const cur = App.curadoriaData[song.id] || {};
+        return {
+            ...song,
+            isCustom: false,
+            type: cur.type || song.type || '',
+            key: cur.key !== undefined ? cur.key : (song.key || '')
+        };
+    });
+
+    App.allSongs = [...mergedCustom, ...mergedBase];
+}
+
 async function loadCatalog() {
     let raw = null;
     if (window.SONGS_CATALOG && Array.isArray(window.SONGS_CATALOG)) {
@@ -255,14 +310,8 @@ async function loadCatalog() {
         return;
     }
 
-    App.allSongs = raw.map(song => {
-        const cur = App.curadoriaData[song.id] || {};
-        return {
-            ...song,
-            type: cur.type || song.type || '',
-            key: cur.key !== undefined ? cur.key : (song.key || '')
-        };
-    });
+    baseCatalogSongs = raw;
+    rebuildAllSongs();
 
     updateWelcomeStats();
     renderTecladoChips();
@@ -1069,3 +1118,95 @@ function setupSearch() {
         });
     }
 }
+
+// ================================================================
+// MODAL DE CADASTRO DE NOVA MÚSICA
+// ================================================================
+function openNewSongModal() {
+    const modal = document.getElementById('modal-new-song');
+    if (!modal) return;
+
+    // Popula dropdown de categorias
+    const sel = document.getElementById('new-song-category');
+    if (sel) {
+        sel.innerHTML = '<option value="">Sem categoria definida</option>' +
+            App.categories.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    }
+
+    // Limpa campos
+    document.getElementById('new-song-title').value = '';
+    document.getElementById('new-song-artist').value = '';
+    document.getElementById('new-song-key').value = '';
+    document.getElementById('new-song-lyrics').value = '';
+
+    modal.classList.add('open');
+    setTimeout(() => {
+        const t = document.getElementById('new-song-title');
+        if (t) t.focus();
+    }, 100);
+}
+
+function closeNewSongModal() {
+    const modal = document.getElementById('modal-new-song');
+    if (modal) modal.classList.remove('open');
+}
+
+function saveNewSong() {
+    const titleEl = document.getElementById('new-song-title');
+    const artistEl = document.getElementById('new-song-artist');
+    const keyEl = document.getElementById('new-song-key');
+    const catEl = document.getElementById('new-song-category');
+    const lyricsEl = document.getElementById('new-song-lyrics');
+
+    const title = (titleEl ? titleEl.value : '').trim();
+    const artist = (artistEl ? artistEl.value : '').trim();
+    const key = (keyEl ? keyEl.value : '').trim().toUpperCase();
+    const type = (catEl ? catEl.value : '').trim();
+    const lyrics = (lyricsEl ? lyricsEl.value : '').trim();
+
+    if (!title) {
+        alert('Por favor, informe o título da música.');
+        if (titleEl) titleEl.focus();
+        return;
+    }
+    if (!lyrics) {
+        alert('Por favor, digite ou cole a letra da música.');
+        if (lyricsEl) lyricsEl.focus();
+        return;
+    }
+
+    const newSong = {
+        id: Date.now(),
+        title: title,
+        artist: artist,
+        key: key,
+        type: type,
+        lyrics: lyrics,
+        isCustom: true,
+        createdAt: new Date().toISOString()
+    };
+
+    // Adiciona no topo das músicas personalizadas
+    App.customSongs.unshift(newSong);
+    saveCustomSongs();
+
+    // Reconstitui a lista consolidada
+    rebuildAllSongs();
+
+    updateWelcomeStats();
+    renderTecladoChips();
+    renderSidebarPulpito();
+    applyFiltersTeclado();
+    applyFiltersPulpito();
+    renderSetlistPanel();
+
+    closeNewSongModal();
+
+    // Abre imediatamente a nova música no modo ativo
+    if (App.currentMode === 'pulpito') {
+        openSongPulpito(newSong.id);
+    } else {
+        openSongTeclado(newSong.id);
+    }
+}
+

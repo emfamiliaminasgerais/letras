@@ -73,6 +73,11 @@
                 <button class="tool-btn" style="min-width:30px; height:28px; font-size:0.8rem;" onclick="adjustFontSize(1)">A+</button>
             </div>
 
+            <!-- Botão Nova Música -->
+            <button id="btn-add-new-song" class="btn btn-primary" onclick="openNewSongModal()" title="Adicionar nova música ao repertório">
+                <span>＋</span> Nova Música
+            </button>
+
             <!-- Botão 2 Colunas -->
             <button id="btn-toggle-columns" class="btn" onclick="toggleColumns()" title="Alternar 1 ou 2 colunas">
                 📖 2 Colunas
@@ -287,8 +292,49 @@
         </div>
     </div>
 
+    <!-- Modal de Cadastro de Nova Música -->
+    <div id="modal-new-song" class="modal-backdrop" onclick="if(event.target===this) closeNewSongModal()">
+        <div class="modal-box modal-box-large">
+            <div class="modal-header">
+                <h3>🎵 Cadastrar Nova Música</h3>
+                <button class="tool-btn" onclick="closeNewSongModal()" style="min-width:28px; height:28px;">✕</button>
+            </div>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin:0 0 16px 0;">
+                Preencha os dados da música. Ela ficará salva na nuvem e disponível em todos os seus aparelhos conectados:
+            </p>
+            <form id="form-new-song" onsubmit="event.preventDefault(); saveNewSong();">
+                <div class="modal-form-grid">
+                    <div class="modal-form-group" style="grid-column: span 2;">
+                        <label for="new-song-title">Título da Música *</label>
+                        <input type="text" id="new-song-title" class="modal-input" placeholder="Ex: Porque Ele Vive" required autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="new-song-artist">Artista / Ministério</label>
+                        <input type="text" id="new-song-artist" class="modal-input" placeholder="Ex: Harpa Cristã, Gabriela Rocha..." autocomplete="off">
+                    </div>
+                    <div class="modal-form-group">
+                        <label for="new-song-key">Tom</label>
+                        <input type="text" id="new-song-key" class="modal-input" placeholder="Ex: G, D, Em..." autocomplete="off">
+                    </div>
+                    <div class="modal-form-group" style="grid-column: span 2;">
+                        <label for="new-song-category">Categoria / Repertório</label>
+                        <select id="new-song-category" class="modal-select"></select>
+                    </div>
+                    <div class="modal-form-group" style="grid-column: span 2;">
+                        <label for="new-song-lyrics">Letra da Música * (Separe estrofes por linha em branco. Use [quebra] ou [coluna] para dividir colunas)</label>
+                        <textarea id="new-song-lyrics" class="modal-textarea" rows="9" placeholder="Digite ou cole a letra da música aqui..." required></textarea>
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:16px;">
+                    <button type="button" class="btn" onclick="closeNewSongModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">💾 Salvar Música</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Scripts (100% Offline + Sincronização em Nuvem) -->
-    <script src="data/songs-data.js?v=1.2.2"></script>
-    <script src="script.js?v=1.3.1"></script>
+    <script src="data/songs-data.js?v=1.4.0"></script>
+    <script src="script.js?v=1.4.0"></script>
 </body>
 </html>
