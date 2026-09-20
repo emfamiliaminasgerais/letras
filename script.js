@@ -52,6 +52,123 @@ function esc(t) {
 }
 function sp(k, v) { localStorage.setItem(k, v); }
 
+// Opções de busca difusa / tolerância ortográfica idênticas ao CifrasCeros
+const fuseOptions = {
+    includeScore: true,
+    ignoreLocation: true,
+    threshold: 0.4,
+    keys: [
+        { name: 'title', weight: 0.6 },
+        { name: 'artist', weight: 0.5 },
+        { name: 'lyrics', weight: 0.4 }
+    ]
+};
+
+// Extrai e destaca com <mark> o trecho exato da letra onde a pesquisa combinou (idêntico ao CifrasCeros)
+function extractLyricsSnippet(lyrics, query) {
+    if (!lyrics || !query) return null;
+    const normQuery = norm(query);
+    if (!normQuery) return null;
+
+    const lines = lyrics.split('\n');
+    let matchedLine = null;
+
+    for (let line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        const normLine = norm(trimmed);
+        if (normLine.includes(normQuery)) {
+            matchedLine = trimmed;
+            break;
+        }
+    }
+
+    if (!matchedLine) {
+        const normLyrics = norm(lyrics);
+        const idx = normLyrics.indexOf(normQuery);
+        if (idx !== -1) {
+            const start = Math.max(0, idx - 20);
+            const end = Math.min(lyrics.length, idx + normQuery.length + 30);
+            matchedLine = lyrics.substring(start, end).replace(/\s+/g, ' ').trim();
+        }
+    }
+
+    if (!matchedLine) return null;
+
+    const normMatchedLine = norm(matchedLine);
+    const pos = normMatchedLine.indexOf(normQuery);
+    if (pos !== -1) {
+        const originalMatch = matchedLine.substring(pos, pos + normQuery.length);
+        const before = esc(matchedLine.substring(0, pos));
+        const matchStr = esc(originalMatch);
+        const after = esc(matchedLine.substring(pos + normQuery.length));
+        return `${before}<mark class="search-snippet-match">${matchStr}</mark>${after}`;
+    }
+
+    return esc(matchedLine);
+}
+
+// Algoritmo em 3 camadas de busca inteligente (CifrasCeros)
+function searchSongs(candidateList, rawQuery) {
+    const query = (rawQuery || '').trim();
+    if (!query) {
+        return candidateList.map(s => ({ ...s, snippet: null }));
+    }
+
+    const normQuery = norm(query);
+    const titleMatches = [];
+    const lyricsDirectMatches = [];
+    const remaining = [];
+    const seenIds = new Set();
+
+    candidateList.forEach(song => {
+        const normTitle = norm(song.title);
+        const normArtist = norm(song.artist || '');
+        const normLyrics = norm(song.lyrics || '');
+
+        const isTitleOrArtistMatch = normTitle.includes(normQuery) || normArtist.includes(normQuery);
+        const isLyricsMatch = normLyrics.includes(normQuery);
+
+        let snippet = null;
+        if (isLyricsMatch) {
+            snippet = extractLyricsSnippet(song.lyrics, query);
+        }
+
+        const songObj = { ...song, snippet };
+
+        if (isTitleOrArtistMatch) {
+            titleMatches.push(songObj);
+            seenIds.add(song.id);
+        } else if (isLyricsMatch) {
+            lyricsDirectMatches.push(songObj);
+            seenIds.add(song.id);
+        } else {
+            remaining.push(song);
+        }
+    });
+
+    let fuzzyMatches = [];
+    if (remaining.length > 0 && typeof Fuse !== 'undefined') {
+        try {
+            const localFuse = new Fuse(remaining, fuseOptions);
+            const fuseResults = localFuse.search(query);
+            fuseResults.forEach(r => {
+                const song = r.item;
+                if (!seenIds.has(song.id)) {
+                    const snippet = extractLyricsSnippet(song.lyrics, query);
+                    fuzzyMatches.push({ ...song, snippet });
+                    seenIds.add(song.id);
+                }
+            });
+        } catch (e) {
+            console.warn('Erro ao executar Fuse search:', e);
+        }
+    }
+
+    return [...titleMatches, ...lyricsDirectMatches, ...fuzzyMatches];
+}
+
+
 // ================================================================
 // CONFIGURAÇÃO DO FIREBASE (SINCRONIZAÇÃO EM NUVEM)
 // ================================================================
@@ -407,34 +524,48 @@ function selectCatTeclado(cat) {
 }
 
 function applyFiltersTeclado() {
-    const q   = norm(App.searchTeclado);
+    const q   = App.searchTeclado;
     const cat = App.activeCatTeclado;
 
-    App.filteredTeclado = App.allSongs.filter(song => {
-        if (cat !== 'Todos' && song.type !== cat) return false;
-        if (!q) return true;
-        if (norm(song.title).includes(q) || norm(song.artist || '').includes(q)) return true;
-        if (q.length >= 3 && song.lyrics) return norm(song.lyrics).includes(q);
-        return false;
-    });
+    let candidateList = App.allSongs;
+    if (cat !== 'Todos') {
+        candidateList = candidateList.filter(song => song.type === cat);
+    }
 
+    App.filteredTeclado = searchSongs(candidateList, q);
     renderSongListTeclado();
 }
 
-// Renderização limpa e elegante idêntica ao CifrasCeros (SEM "PENDENTE")
+// Renderização limpa e elegante idêntica ao CifrasCeros (com suporte a trechos encontrados)
 function renderSongListTeclado() {
     const container = document.getElementById('results-container-teclado');
     if (!container) return;
     const list = App.filteredTeclado;
 
     if (!list.length) {
-        container.innerHTML = '<div style="padding:24px 10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhuma música encontrada.</div>';
+        container.innerHTML = '<div style="padding:24px 10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhuma música encontrada.<br><span style="font-size:0.8rem; opacity:0.7;">Tente buscar por título, trecho da letra ou autor.</span></div>';
         return;
     }
 
     container.innerHTML = list.map(song => {
         const isActive = App.currentSongTeclado && App.currentSongTeclado.id === song.id;
         const keyTag = song.key ? `<span class="song-transpose-tag">Tom: ${esc(song.key)}</span>` : '';
+
+        if (song.snippet) {
+            return `
+                <div class="song-item ${isActive ? 'active' : ''}" onclick="openSongTeclado(${song.id})">
+                    <div class="song-clickable">
+                        <div class="song-info-wrapper">
+                            <div class="song-main-line">
+                                <span class="song-title-text">${esc(song.title)}</span>
+                                ${keyTag}
+                            </div>
+                            <div class="song-snippet-preview">...${song.snippet}...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         return `
             <div class="song-item ${isActive ? 'active' : ''}" onclick="openSongTeclado(${song.id})">
@@ -446,6 +577,7 @@ function renderSongListTeclado() {
         `;
     }).join('');
 }
+
 
 // Abrir música no Modo Teclado (Card CifrasCeros)
 function openSongTeclado(id) {
@@ -579,18 +711,18 @@ function setPulpitoTab(tab) {
 }
 
 function applyFiltersPulpito() {
-    const q   = norm(App.searchPulpito);
+    const q   = App.searchPulpito;
     const cat = App.activeCatPulpito;
 
-    App.filteredPulpito = App.allSongs.filter(song => {
-        if (App.pulpitoTab === 'culto' && !App.cultoSetlist.includes(song.id)) return false;
-        if (cat !== 'Todos' && song.type !== cat) return false;
-        if (!q) return true;
-        if (norm(song.title).includes(q) || norm(song.artist || '').includes(q)) return true;
-        if (q.length >= 3 && song.lyrics) return norm(song.lyrics).includes(q);
-        return false;
-    });
+    let candidateList = App.allSongs;
+    if (App.pulpitoTab === 'culto') {
+        candidateList = candidateList.filter(song => App.cultoSetlist.includes(song.id));
+    }
+    if (cat !== 'Todos') {
+        candidateList = candidateList.filter(song => song.type === cat);
+    }
 
+    App.filteredPulpito = searchSongs(candidateList, q);
     renderPulpitoGrid();
 }
 
@@ -620,10 +752,13 @@ function renderPulpitoGrid() {
 
     grid.innerHTML = App.filteredPulpito.map(song => {
         const inCulto = App.cultoSetlist.includes(song.id);
+        const snippetHtml = song.snippet ? `<div class="song-card-snippet">...${song.snippet}...</div>` : '';
+
         return `
             <div class="song-card ${inCulto ? 'in-culto' : ''}" onclick="openSongPulpito(${song.id})">
                 <div class="song-card-title">${esc(song.title)}</div>
                 <div class="song-card-artist">${esc(song.artist || 'Artista desconhecido')}</div>
+                ${snippetHtml}
                 <div class="song-card-footer">
                     <button class="card-culto-btn ${inCulto ? 'in-culto' : ''}"
                         onclick="event.stopPropagation(); toggleCulto(${song.id})"
