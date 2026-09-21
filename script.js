@@ -582,6 +582,9 @@ function renderSongListTeclado() {
     container.innerHTML = list.map(song => {
         const isActive = App.currentSongTeclado && App.currentSongTeclado.id === song.id;
         const keyTag = song.key ? `<span class="song-transpose-tag">Tom: ${esc(song.key)}</span>` : '';
+        const removeBtn = (App.activeCatTeclado !== 'Todos')
+            ? `<button style="background:none; border:none; color:var(--error-color); opacity:0.6; padding:0 14px; font-size:1.1rem; cursor:pointer;" title="Remover desta playlist" onclick="event.stopPropagation(); removeSongFromCategory(${song.id}, '${esc(App.activeCatTeclado)}')">✕</button>`
+            : '';
 
         if (song.snippet) {
             return `
@@ -595,6 +598,7 @@ function renderSongListTeclado() {
                             <div class="song-snippet-preview">...${song.snippet}...</div>
                         </div>
                     </div>
+                    ${removeBtn}
                 </div>
             `;
         }
@@ -605,6 +609,7 @@ function renderSongListTeclado() {
                     <span class="song-title-text">${esc(song.title)}</span>
                     ${keyTag}
                 </div>
+                ${removeBtn}
             </div>
         `;
     }).join('');
@@ -1030,6 +1035,31 @@ function toggleSongCategory(catName) {
     updateWelcomeStats();
     renderTecladoChips();
     renderSidebarPulpito();
+}
+
+// Remover rapidamente uma música da playlist pela barra lateral
+function removeSongFromCategory(songId, catName) {
+    const song = App.allSongs.find(s => s.id === songId);
+    if (!song) return;
+
+    let types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
+    types = types.filter(t => t !== catName);
+    song.type = types.join(';');
+
+    if (!App.curadoriaData[song.id]) App.curadoriaData[song.id] = {};
+    App.curadoriaData[song.id].type = song.type;
+
+    saveCuradoria();
+    
+    // Atualiza a lista para a música sumir instantaneamente
+    applyFiltersTeclado();
+    applyFiltersPulpito();
+    updateWelcomeStats();
+    
+    // Atualiza os chips caso a música esteja aberta
+    if (App.currentSongTeclado && App.currentSongTeclado.id === song.id) {
+        renderSongCategoriesChips(App.currentSongTeclado);
+    }
 }
 
 // Criar nova categoria a partir do visualizador da música
