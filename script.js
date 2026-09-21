@@ -558,7 +558,10 @@ function applyFiltersTeclado() {
 
     let candidateList = App.allSongs;
     if (cat !== 'Todos') {
-        candidateList = candidateList.filter(song => song.type === cat);
+        candidateList = candidateList.filter(song => {
+            const types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
+            return types.includes(cat);
+        });
     }
 
     App.filteredTeclado = searchSongs(candidateList, q);
@@ -748,7 +751,10 @@ function applyFiltersPulpito() {
         candidateList = candidateList.filter(song => App.cultoSetlist.includes(song.id));
     }
     if (cat !== 'Todos') {
-        candidateList = candidateList.filter(song => song.type === cat);
+        candidateList = candidateList.filter(song => {
+            const types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
+            return types.includes(cat);
+        });
     }
 
     App.filteredPulpito = searchSongs(candidateList, q);
@@ -985,10 +991,10 @@ function renderSongCategoriesChips(song) {
     const container = document.getElementById('song-categories-chips');
     if (!container) return;
 
-    const currentCat = song.type || '';
+    const currentTypes = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
 
     container.innerHTML = App.categories.map(cat => {
-        const isAssigned = (currentCat === cat);
+        const isAssigned = currentTypes.includes(cat);
         return `
             <button class="chip-assign ${isAssigned ? 'active' : ''}" onclick="toggleSongCategory('${esc(cat)}')">
                 ${isAssigned ? '✓ ' + esc(cat) : '＋ ' + esc(cat)}
@@ -1003,15 +1009,18 @@ function renderSongCategoriesChips(song) {
 
 // Alternar a categoria da música atual com um clique simples
 function toggleSongCategory(catName) {
-    if (!App.currentSongTeclado) return;
-    const song = App.currentSongTeclado;
+    const song = App.currentSongTeclado || App.currentSongPulpito;
+    if (!song) return;
 
-    // Se já tinha essa categoria, remove (fica sem categoria / Geral)
-    if (song.type === catName) {
-        song.type = '';
+    let types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
+
+    if (types.includes(catName)) {
+        types = types.filter(t => t !== catName);
     } else {
-        song.type = catName;
+        types.push(catName);
     }
+
+    song.type = types.join(';');
 
     if (!App.curadoriaData[song.id]) App.curadoriaData[song.id] = {};
     App.curadoriaData[song.id].type = song.type;
@@ -1141,10 +1150,12 @@ function renameCategory(oldName) {
 
     // Atualiza músicas que usavam o nome antigo
     App.allSongs.forEach(s => {
-        if (s.type === oldName) {
-            s.type = trimmed;
+        const types = (s.type || '').split(';').map(t => t.trim()).filter(Boolean);
+        if (types.includes(oldName)) {
+            const newTypes = types.map(t => t === oldName ? trimmed : t);
+            s.type = newTypes.join(';');
             if (!App.curadoriaData[s.id]) App.curadoriaData[s.id] = {};
-            App.curadoriaData[s.id].type = trimmed;
+            App.curadoriaData[s.id].type = s.type;
         }
     });
 
@@ -1174,10 +1185,12 @@ function deleteCategory(name) {
 
     // Limpa categoria das músicas associadas
     App.allSongs.forEach(s => {
-        if (s.type === name) {
-            s.type = '';
+        const types = (s.type || '').split(';').map(t => t.trim()).filter(Boolean);
+        if (types.includes(name)) {
+            const newTypes = types.filter(t => t !== name);
+            s.type = newTypes.join(';');
             if (!App.curadoriaData[s.id]) App.curadoriaData[s.id] = {};
-            App.curadoriaData[s.id].type = '';
+            App.curadoriaData[s.id].type = s.type;
         }
     });
 
@@ -1220,7 +1233,10 @@ function computeCatCounts() {
     const counts = { 'Todos': App.allSongs.length };
     App.categories.forEach(c => counts[c] = 0);
     App.allSongs.forEach(s => {
-        if (s.type && counts[s.type] !== undefined) counts[s.type]++;
+        const types = (s.type || '').split(';').map(t => t.trim()).filter(Boolean);
+        types.forEach(t => {
+            if (counts[t] !== undefined) counts[t]++;
+        });
     });
     return counts;
 }
@@ -1228,7 +1244,8 @@ function computeCatCounts() {
 function updateWelcomeStats() {
     let curated = 0;
     App.allSongs.forEach(s => {
-        if (s.type && s.type !== 'Geral') curated++;
+        const types = (s.type || '').split(';').map(t => t.trim()).filter(t => Boolean(t) && t !== 'Geral');
+        if (types.length > 0) curated++;
     });
     const elTotal = document.getElementById('stat-total-songs');
     const elCur = document.getElementById('stat-curated-songs');
