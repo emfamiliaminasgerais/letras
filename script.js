@@ -27,13 +27,13 @@ const App = {
     cultoDrawerOpen: false,
     curadoriaData: {},
     categories: [
-        'Louvor',
-        'Adoração',
-        'Busca do Espírito Santo',
-        'Celebração',
-        'Oferta',
-        'Comunhão',
-        'Apelo / Altar',
+        'Hino para os Aflitos',
+        'Hino de Clamor',
+        'Hino de Adoração',
+        'Hino de Entrega',
+        'Hinos de Salvação',
+        'Hino de Libertação',
+        'Segunda-Feira'
     ]
 };
 
@@ -332,6 +332,7 @@ async function pushFullStateToCloud() {
 }
 
 // ================================================================
+// // ================================================================
 // INICIALIZAÇÃO
 // ================================================================
 document.addEventListener('DOMContentLoaded', async () => {
