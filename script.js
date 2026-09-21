@@ -228,6 +228,30 @@ function setupFirestoreListeners() {
         }
 
         const data = docSnap.data() || {};
+        
+        // --- MIGRAÇÃO V3: Força a categorização IURD sobrepondo a nuvem e local ---
+        if (!localStorage.getItem('letras_iurd_migrated_v3')) {
+            localStorage.setItem('letras_iurd_migrated_v3', '1');
+            App.categories = [
+                'Hino para os Aflitos', 'Hino de Clamor', 'Hino de Adoração',
+                'Hino de Entrega', 'Hinos de Salvação', 'Hino de Libertação', 'Segunda-Feira'
+            ];
+            App.curadoriaData = {};
+            App.allSongs.forEach(s => {
+                if (s.type && s.type !== 'Geral') {
+                    App.curadoriaData[s.id] = { type: s.type };
+                }
+            });
+            sp('letras_categories', JSON.stringify(App.categories));
+            sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
+            
+            pushFullStateToCloud();
+            isInitialCloudLoadDone = true;
+            rebuildAllSongs();
+            return;
+        }
+        // --------------------------------------------------------------------------
+
         let changed = false;
 
         // 1. Sincroniza Músicas Personalizadas
@@ -353,10 +377,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 function loadPrefs() {
     try {
         const cs = localStorage.getItem('letras_custom_songs');  if (cs) App.customSongs   = JSON.parse(cs);
-        const c  = localStorage.getItem('letras_curadoria_v1');   if (c)  App.curadoriaData = JSON.parse(c);
         const s  = localStorage.getItem('letras_setlist');        if (s)  App.cultoSetlist  = JSON.parse(s);
-        const cats = localStorage.getItem('letras_categories');  if (cats) App.categories = JSON.parse(cats);
         const fs = localStorage.getItem('letras_fontsize');      if (fs) App.fontSize      = parseInt(fs, 10);
+        
+        if (localStorage.getItem('letras_iurd_migrated_v3')) {
+            const c  = localStorage.getItem('letras_curadoria_v1');   if (c)  App.curadoriaData = JSON.parse(c);
+            const cats = localStorage.getItem('letras_categories');  if (cats) App.categories = JSON.parse(cats);
+        }
+
         const mode = localStorage.getItem('letras_mode');        if (mode) App.currentMode = mode;
         const cols = localStorage.getItem('letras_columns');     if (cols !== null) App.isTwoColumns = (cols === 'true');
     } catch(e) {
