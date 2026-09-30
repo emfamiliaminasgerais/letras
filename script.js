@@ -1,5 +1,5 @@
 // ================================================================
-// ESTADO GLOBAL DA APLICAÇÃO
+// ESTADO GLOBAL DA APLICAÃ‡ÃƒO
 // ================================================================
 const App = {
     allSongs: [],
@@ -11,7 +11,7 @@ const App = {
     searchTeclado: '',
     activeCatTeclado: 'Todos',
     
-    // Modo Púlpito
+    // Modo PÃºlpito
     filteredPulpito: [],
     currentSongPulpito: null,
     searchPulpito: '',
@@ -19,20 +19,20 @@ const App = {
     pulpitoTab: 'todas',
     pulpitoGridVisible: true,
     
-    // Configurações e Dados Compartilhados
+    // ConfiguraÃ§Ãµes e Dados Compartilhados
     currentMode: 'teclado',
     isTwoColumns: true,
-    fontSize: 13.5, // Tamanho padrão compacto e confortável (13.5px)
+    fontSize: 13.5, // Tamanho padrÃ£o compacto e confortÃ¡vel (13.5px)
     cultoSetlist: [],
     cultoDrawerOpen: false,
     curadoriaData: {},
     categories: [
         'Hino para os Aflitos',
         'Hino de Clamor',
-        'Hino de Adoração',
+        'Hino de AdoraÃ§Ã£o',
         'Hino de Entrega',
-        'Hinos de Salvação',
-        'Hino de Libertação',
+        'Hinos de SalvaÃ§Ã£o',
+        'Hino de LibertaÃ§Ã£o',
         'Segunda-Feira'
     ]
 };
@@ -50,9 +50,13 @@ function esc(t) {
     if (!t) return '';
     return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
+function escJs(t) {
+    if (!t) return '';
+    return t.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
 function sp(k, v) { localStorage.setItem(k, v); }
 
-// Opções de busca difusa / tolerância ortográfica idênticas ao CifrasCeros
+// OpÃ§Ãµes de busca difusa / tolerÃ¢ncia ortogrÃ¡fica idÃªnticas ao CifrasCeros
 const fuseOptions = {
     includeScore: true,
     ignoreLocation: true,
@@ -64,7 +68,7 @@ const fuseOptions = {
     ]
 };
 
-// Extrai e destaca com <mark> o trecho exato da letra onde a pesquisa combinou (idêntico ao CifrasCeros)
+// Extrai e destaca com <mark> o trecho exato da letra onde a pesquisa combinou (idÃªntico ao CifrasCeros)
 function extractLyricsSnippet(lyrics, query) {
     if (!lyrics || !query) return null;
     const normQuery = norm(query);
@@ -170,7 +174,7 @@ function searchSongs(candidateList, rawQuery) {
 
 
 // ================================================================
-// CONFIGURAÇÃO DO FIREBASE (SINCRONIZAÇÃO EM NUVEM)
+// CONFIGURAÃ‡ÃƒO DO FIREBASE (SINCRONIZAÃ‡ÃƒO EM NUVEM)
 // ================================================================
 const firebaseConfig = {
     apiKey: "AIzaSyDlmeAqQ8CQ_i_-wTwSLpsK4FMwVT2x930",
@@ -212,7 +216,7 @@ function updateSyncIndicator(status, text) {
     if (label) label.textContent = text || (status === 'connected' ? 'Sincronizado' : 'Offline');
 }
 
-// Escuta alterações do Firestore em tempo real (Celular, PC 1, PC 2)
+// Escuta alteraÃ§Ãµes do Firestore em tempo real (Celular, PC 1, PC 2)
 function setupFirestoreListeners() {
     if (!firestoreDb) return;
 
@@ -220,7 +224,7 @@ function setupFirestoreListeners() {
 
     docRef.onSnapshot(docSnap => {
         if (!docSnap.exists) {
-            // Se o documento ainda não existir na nuvem, salva o estado inicial local
+            // Se o documento ainda nÃ£o existir na nuvem, salva o estado inicial local
             pushFullStateToCloud();
             isInitialCloudLoadDone = true;
             updateSyncIndicator('connected', 'Sincronizado');
@@ -229,7 +233,7 @@ function setupFirestoreListeners() {
 
         const data = docSnap.data() || {};
         
-        // --- MIGRAÇÃO V3: Marcador local (não sobrescreve mais a nuvem) ---
+        // --- MIGRAÃ‡ÃƒO V3: Marcador local (nÃ£o sobrescreve mais a nuvem) ---
         if (!localStorage.getItem('letras_iurd_migrated_v3')) {
             localStorage.setItem('letras_iurd_migrated_v3', '1');
         }
@@ -237,7 +241,7 @@ function setupFirestoreListeners() {
 
         let changed = false;
 
-        // 1. Sincroniza Músicas Personalizadas
+        // 1. Sincroniza MÃºsicas Personalizadas
         if (Array.isArray(data.custom_songs)) {
             App.customSongs = data.custom_songs;
             sp('letras_custom_songs', JSON.stringify(App.customSongs));
@@ -252,12 +256,12 @@ function setupFirestoreListeners() {
             changed = true;
         }
 
-        // 3. Sincroniza Curadoria (tom, categoria de cada música)
+        // 3. Sincroniza Curadoria (tom, categoria de cada mÃºsica)
         if (data.curadoria && typeof data.curadoria === 'object') {
             App.curadoriaData = data.curadoria;
             sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
 
-            // Aplica nas músicas em memória
+            // Aplica nas mÃºsicas em memÃ³ria
             App.allSongs.forEach(song => {
                 const cur = App.curadoriaData[song.id];
                 if (cur) {
@@ -275,7 +279,7 @@ function setupFirestoreListeners() {
             changed = true;
         }
 
-        // Marca que o primeiro carregamento da nuvem foi concluído com sucesso
+        // Marca que o primeiro carregamento da nuvem foi concluÃ­do com sucesso
         isInitialCloudLoadDone = true;
 
         if (changed) {
@@ -303,11 +307,11 @@ function setupFirestoreListeners() {
     });
 }
 
-// Salva alterações na nuvem de forma assíncrona com proteção contra sobrescrita indevida
+// Salva alteraÃ§Ãµes na nuvem de forma assÃ­ncrona com proteÃ§Ã£o contra sobrescrita indevida
 async function pushToCloud(field, value) {
     if (!firestoreDb) return;
     if (!isInitialCloudLoadDone) {
-        console.warn('Aguardando sincronização inicial da nuvem antes de enviar alterações:', field);
+        console.warn('Aguardando sincronizaÃ§Ã£o inicial da nuvem antes de enviar alteraÃ§Ãµes:', field);
         return;
     }
     updateSyncIndicator('syncing', 'Salvando...');
@@ -340,7 +344,7 @@ async function pushFullStateToCloud() {
 
 // ================================================================
 // // ================================================================
-// INICIALIZAÇÃO
+// INICIALIZAÃ‡ÃƒO
 // ================================================================
 document.addEventListener('DOMContentLoaded', async () => {
     loadPrefs();
@@ -371,7 +375,7 @@ function loadPrefs() {
         const mode = localStorage.getItem('letras_mode');        if (mode) App.currentMode = mode;
         const cols = localStorage.getItem('letras_columns');     if (cols !== null) App.isTwoColumns = (cols === 'true');
     } catch(e) {
-        console.warn('Erro ao carregar preferências:', e);
+        console.warn('Erro ao carregar preferÃªncias:', e);
     }
 }
 
@@ -393,13 +397,13 @@ function saveCustomSongs() {
 }
 
 // ================================================================
-// CARREGAMENTO DO CATÁLOGO E RECONSTRUÇÃO
+// CARREGAMENTO DO CATÃLOGO E RECONSTRUÃ‡ÃƒO
 // ================================================================
 function rebuildAllSongs() {
     const customList = App.customSongs || [];
     const baseList = baseCatalogSongs || [];
 
-    // Músicas personalizadas ficam no topo e mesclam curadoria se houver
+    // MÃºsicas personalizadas ficam no topo e mesclam curadoria se houver
     const mergedCustom = customList.map(song => {
         const cur = App.curadoriaData[song.id] || {};
         return {
@@ -435,7 +439,7 @@ async function loadCatalog() {
     }
     
     if (!raw || !raw.length) {
-        console.error('Catálogo não encontrado.');
+        console.error('CatÃ¡logo nÃ£o encontrado.');
         return;
     }
 
@@ -450,7 +454,7 @@ async function loadCatalog() {
 }
 
 // ================================================================
-// OVERLAY / SELEÇÃO DE MODO
+// OVERLAY / SELEÃ‡ÃƒO DE MODO
 // ================================================================
 function showOverlay() { document.getElementById('mode-selection-overlay').classList.remove('hidden'); }
 function hideOverlay() { document.getElementById('mode-selection-overlay').classList.add('hidden'); }
@@ -468,7 +472,7 @@ function chooseMode(mode) {
 function openModeModal() { showOverlay(); }
 
 // ================================================================
-// ALTERNAR MODOS (TECLADO / PÚLPITO)
+// ALTERNAR MODOS (TECLADO / PÃšLPITO)
 // ================================================================
 function applyMode(mode) {
     App.currentMode = mode;
@@ -485,7 +489,7 @@ function applyMode(mode) {
 
     if (mode === 'teclado') {
         pill.className = 'current-mode-pill mode-teclado';
-        pillTxt.textContent = '🎹 Modo Teclado';
+        pillTxt.textContent = 'ðŸŽ¹ Modo Teclado';
         sbTeclado.style.display = 'flex';
         sbPulpito.style.display = 'none';
         mainTeclado.style.display = 'flex';
@@ -497,7 +501,7 @@ function applyMode(mode) {
         renderSetlistPanel();
     } else {
         pill.className = 'current-mode-pill mode-pulpito';
-        pillTxt.textContent = '📖 Modo Púlpito';
+        pillTxt.textContent = 'ðŸ“– Modo PÃºlpito';
         sbTeclado.style.display = 'none';
         sbPulpito.style.display = 'flex';
         mainTeclado.style.display = 'none';
@@ -523,7 +527,7 @@ function renderTecladoChips() {
 
     container.innerHTML = allCats.map(cat => {
         const isActive = App.activeCatTeclado === cat;
-        return `<button class="chip ${isActive ? 'active' : ''}" onclick="selectCatTeclado('${esc(cat)}')">
+        return `<button class="chip ${isActive ? 'active' : ''}" onclick="selectCatTeclado('${escJs(cat)}')">
             ${esc(cat)}
         </button>`;
     }).join('');
@@ -551,22 +555,22 @@ function applyFiltersTeclado() {
     renderSongListTeclado();
 }
 
-// Renderização limpa e elegante idêntica ao CifrasCeros (com suporte a trechos encontrados)
+// RenderizaÃ§Ã£o limpa e elegante idÃªntica ao CifrasCeros (com suporte a trechos encontrados)
 function renderSongListTeclado() {
     const container = document.getElementById('results-container-teclado');
     if (!container) return;
     const list = App.filteredTeclado;
 
     if (!list.length) {
-        container.innerHTML = '<div style="padding:24px 10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhuma música encontrada.<br><span style="font-size:0.8rem; opacity:0.7;">Tente buscar por título, trecho da letra ou autor.</span></div>';
+        container.innerHTML = '<div style="padding:24px 10px; text-align:center; color:var(--text-muted); font-size:0.9rem;">Nenhuma mÃºsica encontrada.<br><span style="font-size:0.8rem; opacity:0.7;">Tente buscar por tÃ­tulo, trecho da letra ou autor.</span></div>';
         return;
     }
 
     let clearBtnHtml = '';
     if (App.activeCatTeclado !== 'Todos' && list.length > 0) {
         clearBtnHtml = `<div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; border-bottom: 1px solid var(--surface-border); background: rgba(0,0,0,0.1);">
-            <span style="font-size:0.75rem; color:var(--text-muted);">${list.length} músicas</span>
-            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.7rem;" onclick="clearPlaylistCore('${esc(App.activeCatTeclado)}')">🗑️ Limpar</button>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${list.length} mÃºsicas</span>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.7rem;" onclick="clearPlaylistCore('${escJs(App.activeCatTeclado)}')">ðŸ—‘ï¸ Limpar</button>
         </div>`;
     }
 
@@ -574,7 +578,7 @@ function renderSongListTeclado() {
         const isActive = App.currentSongTeclado && App.currentSongTeclado.id === song.id;
         const keyTag = song.key ? `<span class="song-transpose-tag">Tom: ${esc(song.key)}</span>` : '';
         const removeBtn = (App.activeCatTeclado !== 'Todos')
-            ? `<button style="background:none; border:none; color:var(--error-color); opacity:0.6; padding:0 14px; font-size:1.1rem; cursor:pointer;" title="Remover desta playlist" onclick="event.stopPropagation(); removeSongFromCategory(${song.id}, '${esc(App.activeCatTeclado)}')">✕</button>`
+            ? `<button style="background:none; border:none; color:var(--error-color); opacity:0.6; padding:0 14px; font-size:1.1rem; cursor:pointer;" title="Remover desta playlist" onclick="event.stopPropagation(); removeSongFromCategory(${song.id}, '${escJs(App.activeCatTeclado)}')">âœ•</button>`
             : '';
 
         if (song.snippet) {
@@ -607,7 +611,7 @@ function renderSongListTeclado() {
 }
 
 
-// Abrir música no Modo Teclado (Card CifrasCeros)
+// Abrir mÃºsica no Modo Teclado (Card CifrasCeros)
 function openSongTeclado(id) {
     const song = App.allSongs.find(s => s.id === id);
     if (!song) return;
@@ -620,7 +624,7 @@ function openSongTeclado(id) {
     welcome.style.display = 'none';
     songView.className = 'active';
 
-    // Título
+    // TÃ­tulo
     document.getElementById('t-sv-title').textContent = song.title;
 
     // Tom
@@ -635,10 +639,10 @@ function openSongTeclado(id) {
     content.className = App.isTwoColumns ? 'two-columns' : '';
     content.innerHTML = buildLyricsHtml(song.lyrics);
 
-    // Barra de categorias da música (estilo CifrasCeros)
+    // Barra de categorias da mÃºsica (estilo CifrasCeros)
     renderSongCategoriesChips(song);
 
-    // Sincroniza botão de Setlist
+    // Sincroniza botÃ£o de Setlist
     syncSetlistBtn(song.id);
     renderSetlistPanel();
 
@@ -655,7 +659,7 @@ function renderSetlistPanel() {
     updateCultoSidebarBadge();
 
     if (!App.cultoSetlist.length) {
-        container.innerHTML = '<div class="empty-setlist-msg">Nenhuma música no setlist.<br>Clique em <strong>＋ Setlist</strong> dentro de uma música.</div>';
+        container.innerHTML = '<div class="empty-setlist-msg">Nenhuma mÃºsica no setlist.<br>Clique em <strong>ï¼‹ Setlist</strong> dentro de uma mÃºsica.</div>';
         return;
     }
 
@@ -671,7 +675,7 @@ function renderSetlistPanel() {
                     <span class="setlist-title-txt" title="${esc(s.title)}">${esc(s.title)}</span>
                     ${s.key ? `<span class="setlist-key-tag">${esc(s.key)}</span>` : ''}
                 </div>
-                <button class="remove-setlist-btn" onclick="event.stopPropagation(); removeCulto(${s.id})" title="Remover">✕</button>
+                <button class="remove-setlist-btn" onclick="event.stopPropagation(); removeCulto(${s.id})" title="Remover">âœ•</button>
             </div>
         `;
     }).join('');
@@ -697,11 +701,11 @@ function syncSetlistBtn(id) {
     if (!btn) return;
     const inSet = App.cultoSetlist.includes(id);
     btn.className = inSet ? 'btn btn-accent' : 'btn';
-    btn.innerHTML = inSet ? '⭐ No Setlist' : '＋ Setlist';
+    btn.innerHTML = inSet ? 'â­ No Setlist' : 'ï¼‹ Setlist';
 }
 
 // ================================================================
-// MODO PÚLPITO (WIREFRAME SOLICITADO)
+// MODO PÃšLPITO (WIREFRAME SOLICITADO)
 // ================================================================
 function renderSidebarPulpito() {
     const container = document.getElementById('pulpito-cat-list');
@@ -713,7 +717,7 @@ function renderSidebarPulpito() {
     container.innerHTML = allCats.map(cat => {
         const isActive = App.activeCatPulpito === cat;
         return `
-            <div class="pulpito-cat-item ${isActive ? 'active' : ''}" onclick="selectCatPulpito('${esc(cat)}')">
+            <div class="pulpito-cat-item ${isActive ? 'active' : ''}" onclick="selectCatPulpito('${escJs(cat)}')">
                 <span>${esc(cat)}</span>
                 <span class="pulpito-cat-count">${counts[cat] || 0}</span>
             </div>
@@ -770,11 +774,11 @@ function renderPulpitoGrid() {
     if (!grid) return;
 
     const total = App.filteredPulpito.length;
-    if (ctxTit) ctxTit.textContent = App.activeCatPulpito === 'Todos' ? (App.pulpitoTab === 'culto' ? 'Músicas do Culto' : 'Todas as Músicas') : App.activeCatPulpito;
-    if (ctxCnt) ctxCnt.textContent = `${total} músicas`;
+    if (ctxTit) ctxTit.textContent = App.activeCatPulpito === 'Todos' ? (App.pulpitoTab === 'culto' ? 'MÃºsicas do Culto' : 'Todas as MÃºsicas') : App.activeCatPulpito;
+    if (ctxCnt) ctxCnt.textContent = `${total} mÃºsicas`;
 
     if (!total) {
-        grid.innerHTML = `<div class="grid-empty-state">${App.pulpitoTab === 'culto' ? 'Nenhuma música no culto ainda.' : 'Nenhuma música encontrada.'}</div>`;
+        grid.innerHTML = `<div class="grid-empty-state">${App.pulpitoTab === 'culto' ? 'Nenhuma mÃºsica no culto ainda.' : 'Nenhuma mÃºsica encontrada.'}</div>`;
         return;
     }
 
@@ -813,7 +817,7 @@ function openSongPulpito(id) {
     viewer.className = 'active';
 
     document.getElementById('p-viewer-title').textContent = song.title;
-    document.getElementById('p-viewer-artist').textContent = song.artist || 'Artista não informado';
+    document.getElementById('p-viewer-artist').textContent = song.artist || 'Artista nÃ£o informado';
     
     const kb = document.getElementById('p-viewer-key');
     if (kb) kb.style.display = 'none';
@@ -851,7 +855,7 @@ function syncCultoBtn(id) {
     if (!btn) return;
     const inCulto = App.cultoSetlist.includes(id);
     btn.className = inCulto ? 'btn btn-accent' : 'btn btn-primary';
-    btn.innerHTML = inCulto ? '⭐ No Culto (Remover)' : '➕ Adicionar ao Culto';
+    btn.innerHTML = inCulto ? 'â­ No Culto (Remover)' : 'âž• Adicionar ao Culto';
 }
 
 function toggleViewerCulto() {
@@ -873,7 +877,7 @@ function removeCulto(id) {
 }
 
 function clearCulto() {
-    if (confirm('Limpar todas as músicas do setlist / culto?')) {
+    if (confirm('Limpar todas as mÃºsicas do setlist / culto?')) {
         App.cultoSetlist = [];
         saveSetlist();
         updateCultoSidebarBadge();
@@ -904,7 +908,7 @@ function renderCultoDrawerList() {
     const c = document.getElementById('culto-list-container');
     if (!c) return;
     if (!App.cultoSetlist.length) {
-        c.innerHTML = '<div class="grid-empty-state" style="padding:20px;">Nenhuma música no culto.</div>';
+        c.innerHTML = '<div class="grid-empty-state" style="padding:20px;">Nenhuma mÃºsica no culto.</div>';
         return;
     }
     c.innerHTML = App.cultoSetlist.map((id, i) => {
@@ -914,7 +918,7 @@ function renderCultoDrawerList() {
             <div class="culto-item" onclick="openSongPulpito(${s.id}); toggleCultoDrawer();">
                 <span class="culto-item-num">#${i+1}</span>
                 <span class="culto-item-title">${esc(s.title)}</span>
-                <button class="btn-remove-culto" onclick="event.stopPropagation(); removeCulto(${s.id})" title="Remover">✕</button>
+                <button class="btn-remove-culto" onclick="event.stopPropagation(); removeCulto(${s.id})" title="Remover">âœ•</button>
             </div>
         `;
     }).join('');
@@ -929,7 +933,7 @@ function adjustFontSize(delta) {
     
     updateFontDisplays();
 
-    // Aplica no conteúdo ativo
+    // Aplica no conteÃºdo ativo
     const elTeclado = document.getElementById('sv-content-teclado');
     if (elTeclado) elTeclado.style.fontSize = App.fontSize + 'px';
 
@@ -960,7 +964,7 @@ function toggleColumns() {
 function updateColumnsUI() {
     const btnHeader = document.getElementById('btn-toggle-columns');
     const btnTeclado = document.getElementById('btn-t-toggle-columns');
-    const label = App.isTwoColumns ? '📖 2 Colunas' : '📄 1 Coluna';
+    const label = App.isTwoColumns ? 'ðŸ“– 2 Colunas' : 'ðŸ“„ 1 Coluna';
 
     if (btnHeader) btnHeader.textContent = label;
     if (btnTeclado) {
@@ -982,7 +986,7 @@ function toggleSidebar() {
 // GERENCIAMENTO COMPLETO DE CATEGORIAS (ESTILO CIFRACEROS)
 // ================================================================
 
-// Renderiza a barra de chips de categoria dentro da música atual (CifrasCeros)
+// Renderiza a barra de chips de categoria dentro da mÃºsica atual (CifrasCeros)
 function renderSongCategoriesChips(song) {
     const container = document.getElementById('song-categories-chips');
     if (!container) return;
@@ -992,18 +996,18 @@ function renderSongCategoriesChips(song) {
     container.innerHTML = App.categories.map(cat => {
         const isAssigned = currentTypes.includes(cat);
         return `
-            <button class="chip-assign ${isAssigned ? 'active' : ''}" onclick="toggleSongCategory('${esc(cat)}')">
-                ${isAssigned ? '✓ ' + esc(cat) : '＋ ' + esc(cat)}
+            <button class="chip-assign ${isAssigned ? 'active' : ''}" onclick="toggleSongCategory('${escJs(cat)}')">
+                ${isAssigned ? 'âœ“ ' + esc(cat) : 'ï¼‹ ' + esc(cat)}
             </button>
         `;
     }).join('') + `
         <button class="chip-assign" style="background:rgba(251,191,36,0.1); color:var(--chord-color); border-color:rgba(251,191,36,0.3);" onclick="promptNewCategoryFromViewer()">
-            ＋ Nova
+            ï¼‹ Nova
         </button>
     `;
 }
 
-// Alternar a categoria da música atual com um clique simples
+// Alternar a categoria da mÃºsica atual com um clique simples
 function toggleSongCategory(catName) {
     const song = App.currentSongTeclado || App.currentSongPulpito;
     if (!song) return;
@@ -1031,7 +1035,7 @@ function toggleSongCategory(catName) {
 // Esvaziar completamente uma categoria/playlist
 function clearPlaylistCore(catName) {
     if (!catName || catName === 'Todos') return;
-    if (!confirm(`Tem certeza que deseja remover TODAS as músicas da playlist "${catName}"?`)) return;
+    if (!confirm(`Tem certeza que deseja remover TODAS as mÃºsicas da playlist "${catName}"?`)) return;
 
     App.allSongs.forEach(song => {
         let types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
@@ -1051,7 +1055,7 @@ function clearPlaylistCore(catName) {
     updateWelcomeStats();
 }
 
-// Remover rapidamente uma música da playlist pela barra lateral
+// Remover rapidamente uma mÃºsica da playlist pela barra lateral
 function removeSongFromCategory(songId, catName) {
     const song = App.allSongs.find(s => s.id === songId);
     if (!song) return;
@@ -1065,24 +1069,24 @@ function removeSongFromCategory(songId, catName) {
 
     saveCuradoria();
     
-    // Atualiza a lista para a música sumir instantaneamente
+    // Atualiza a lista para a mÃºsica sumir instantaneamente
     applyFiltersTeclado();
     applyFiltersPulpito();
     updateWelcomeStats();
     
-    // Atualiza os chips caso a música esteja aberta
+    // Atualiza os chips caso a mÃºsica esteja aberta
     if (App.currentSongTeclado && App.currentSongTeclado.id === song.id) {
         renderSongCategoriesChips(App.currentSongTeclado);
     }
 }
 
-// Criar nova categoria a partir do visualizador da música
+// Criar nova categoria a partir do visualizador da mÃºsica
 function promptNewCategoryFromViewer() {
     const name = prompt('Nome da nova categoria:');
     if (!name || !name.trim()) return;
     const trimmed = name.trim();
     if (App.categories.includes(trimmed)) {
-        alert('Esta categoria já existe!');
+        alert('Esta categoria jÃ¡ existe!');
         return;
     }
     App.categories.push(trimmed);
@@ -1102,7 +1106,7 @@ function createCategoryFromInput() {
     if (!name) return;
 
     if (App.categories.includes(name)) {
-        alert('Esta categoria já existe!');
+        alert('Esta categoria jÃ¡ existe!');
         return;
     }
 
@@ -1125,7 +1129,7 @@ function createCategoryFromModal() {
     if (!name) return;
 
     if (App.categories.includes(name)) {
-        alert('Esta categoria já existe!');
+        alert('Esta categoria jÃ¡ existe!');
         return;
     }
 
@@ -1171,11 +1175,11 @@ function renderCategoryModalList() {
             <div class="modal-cat-item">
                 <div>
                     <strong style="font-size:0.9rem; color:#fff;">${esc(cat)}</strong>
-                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">(${count} músicas)</span>
+                    <span style="font-size:0.75rem; color:var(--text-muted); margin-left:8px;">(${count} mÃºsicas)</span>
                 </div>
                 <div class="modal-cat-actions">
-                    <button class="tool-btn" style="height:28px; padding:0 8px; font-size:0.75rem;" onclick="renameCategory('${esc(cat)}')" title="Renomear">✏️</button>
-                    <button class="tool-btn" style="height:28px; padding:0 8px; font-size:0.75rem; color:var(--error-color);" onclick="deleteCategory('${esc(cat)}')" title="Excluir">🗑️</button>
+                    <button class="tool-btn" style="height:28px; padding:0 8px; font-size:0.75rem;" onclick="renameCategory('${escJs(cat)}')" title="Renomear">âœï¸</button>
+                    <button class="tool-btn" style="height:28px; padding:0 8px; font-size:0.75rem; color:var(--error-color);" onclick="deleteCategory('${escJs(cat)}')" title="Excluir">ðŸ—‘ï¸</button>
                 </div>
             </div>
         `;
@@ -1192,7 +1196,7 @@ function renameCategory(oldName) {
         App.categories[idx] = trimmed;
     }
 
-    // Atualiza músicas que usavam o nome antigo
+    // Atualiza mÃºsicas que usavam o nome antigo
     App.allSongs.forEach(s => {
         const types = (s.type || '').split(';').map(t => t.trim()).filter(Boolean);
         if (types.includes(oldName)) {
@@ -1220,14 +1224,14 @@ function deleteCategory(name) {
     const counts = computeCatCounts();
     const count = counts[name] || 0;
     const msg = count > 0
-        ? `Excluir a categoria "${name}"? ${count} música(s) ficarão sem categoria.`
+        ? `Excluir a categoria "${name}"? ${count} mÃºsica(s) ficarÃ£o sem categoria.`
         : `Deseja excluir a categoria "${name}"?`;
 
     if (!confirm(msg)) return;
 
     App.categories = App.categories.filter(c => c !== name);
 
-    // Limpa categoria das músicas associadas
+    // Limpa categoria das mÃºsicas associadas
     App.allSongs.forEach(s => {
         const types = (s.type || '').split(';').map(t => t.trim()).filter(Boolean);
         if (types.includes(name)) {
@@ -1251,11 +1255,11 @@ function deleteCategory(name) {
     if (App.currentSongTeclado) renderSongCategoriesChips(App.currentSongTeclado);
 }
 
-// Edição rápida de tom ao clicar na badge de tom
+// EdiÃ§Ã£o rÃ¡pida de tom ao clicar na badge de tom
 function promptEditKey() {
     if (!App.currentSongTeclado) return;
     const current = App.currentSongTeclado.key || '';
-    const newKey = prompt('Editar Tom da Música (ex: C, D, E, F, G, A, B, Gm, F#m):', current);
+    const newKey = prompt('Editar Tom da MÃºsica (ex: C, D, E, F, G, A, B, Gm, F#m):', current);
     if (newKey === null) return;
     const trimmed = newKey.trim().toUpperCase();
 
@@ -1301,9 +1305,17 @@ function updateWelcomeStats() {
 // LETRAS EM HTML
 // ================================================================
 function buildLyricsHtml(raw) {
-    if (!raw) return '<div style="color:var(--text-subtle); font-style:italic; padding:20px;">Sem letra disponível para esta música.</div>';
+    if (!raw) return '<div style="color:var(--text-subtle); font-style:italic; padding:20px;">Sem letra disponÃ­vel para esta mÃºsica.</div>';
 
-    const stanzas = raw.split(/\n\s*\n/);
+    // Garante que marcadores de coluna fiquem em blocos separados
+    const preProcessed = raw
+        .replace(/\[coluna\]/gi, '\n\n[coluna]\n\n')
+        .replace(/\[col\]/gi, '\n\n[coluna]\n\n')
+        .replace(/\[quebra\]/gi, '\n\n[coluna]\n\n')
+        .replace(/\-{3,}/g, '\n\n[coluna]\n\n')
+        .replace(/\={3,}/g, '\n\n[coluna]\n\n');
+
+    const stanzas = preProcessed.split(/\n\s*\n/);
     return stanzas.map(s => {
         const clean = s.trim();
         if (!clean) return '';
@@ -1315,7 +1327,7 @@ function buildLyricsHtml(raw) {
 }
 
 // ================================================================
-// BUSCA INSTANTÂNEA
+// BUSCA INSTANTÃ‚NEA
 // ================================================================
 function setupSearch() {
     const st = document.getElementById('search-input-teclado');
@@ -1345,7 +1357,7 @@ function setupSearch() {
 }
 
 // ================================================================
-// MODAL DE CADASTRO DE NOVA MÚSICA
+// MODAL DE CADASTRO DE NOVA MÃšSICA
 // ================================================================
 function openNewSongModal() {
     const modal = document.getElementById('modal-new-song');
@@ -1390,12 +1402,12 @@ function saveNewSong() {
     const lyrics = (lyricsEl ? lyricsEl.value : '').trim();
 
     if (!title) {
-        alert('Por favor, informe o título da música.');
+        alert('Por favor, informe o tÃ­tulo da mÃºsica.');
         if (titleEl) titleEl.focus();
         return;
     }
     if (!lyrics) {
-        alert('Por favor, digite ou cole a letra da música.');
+        alert('Por favor, digite ou cole a letra da mÃºsica.');
         if (lyricsEl) lyricsEl.focus();
         return;
     }
@@ -1411,7 +1423,7 @@ function saveNewSong() {
         createdAt: new Date().toISOString()
     };
 
-    // Adiciona no topo das músicas personalizadas
+    // Adiciona no topo das mÃºsicas personalizadas
     App.customSongs.unshift(newSong);
     saveCustomSongs();
 
@@ -1427,11 +1439,12 @@ function saveNewSong() {
 
     closeNewSongModal();
 
-    // Abre imediatamente a nova música no modo ativo
+    // Abre imediatamente a nova mÃºsica no modo ativo
     if (App.currentMode === 'pulpito') {
         openSongPulpito(newSong.id);
     } else {
         openSongTeclado(newSong.id);
     }
 }
+
 
