@@ -229,26 +229,9 @@ function setupFirestoreListeners() {
 
         const data = docSnap.data() || {};
         
-        // --- MIGRAÇÃO V3: Força a categorização IURD sobrepondo a nuvem e local ---
+        // --- MIGRAÇÃO V3: Marcador local (não sobrescreve mais a nuvem) ---
         if (!localStorage.getItem('letras_iurd_migrated_v3')) {
             localStorage.setItem('letras_iurd_migrated_v3', '1');
-            App.categories = [
-                'Hino para os Aflitos', 'Hino de Clamor', 'Hino de Adoração',
-                'Hino de Entrega', 'Hinos de Salvação', 'Hino de Libertação', 'Segunda-Feira'
-            ];
-            App.curadoriaData = {};
-            App.allSongs.forEach(s => {
-                if (s.type && s.type !== 'Geral') {
-                    App.curadoriaData[s.id] = { type: s.type };
-                }
-            });
-            sp('letras_categories', JSON.stringify(App.categories));
-            sp('letras_curadoria_v1', JSON.stringify(App.curadoriaData));
-            
-            pushFullStateToCloud();
-            isInitialCloudLoadDone = true;
-            rebuildAllSongs();
-            return;
         }
         // --------------------------------------------------------------------------
 
