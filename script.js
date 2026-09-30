@@ -562,7 +562,15 @@ function renderSongListTeclado() {
         return;
     }
 
-    container.innerHTML = list.map(song => {
+    let clearBtnHtml = '';
+    if (App.activeCatTeclado !== 'Todos' && list.length > 0) {
+        clearBtnHtml = `<div style="display:flex; justify-content:space-between; align-items:center; padding: 8px 12px; border-bottom: 1px solid var(--surface-border); background: rgba(0,0,0,0.1);">
+            <span style="font-size:0.75rem; color:var(--text-muted);">${list.length} músicas</span>
+            <button class="btn btn-danger" style="padding:4px 8px; font-size:0.7rem;" onclick="clearPlaylistCore('${esc(App.activeCatTeclado)}')">🗑️ Limpar</button>
+        </div>`;
+    }
+
+    container.innerHTML = clearBtnHtml + list.map(song => {
         const isActive = App.currentSongTeclado && App.currentSongTeclado.id === song.id;
         const keyTag = song.key ? `<span class="song-transpose-tag">Tom: ${esc(song.key)}</span>` : '';
         const removeBtn = (App.activeCatTeclado !== 'Todos')
@@ -764,6 +772,15 @@ function renderPulpitoGrid() {
     const total = App.filteredPulpito.length;
     if (ctxTit) ctxTit.textContent = App.activeCatPulpito === 'Todos' ? (App.pulpitoTab === 'culto' ? 'Músicas do Culto' : 'Todas as Músicas') : App.activeCatPulpito;
     if (ctxCnt) ctxCnt.textContent = `${total} músicas`;
+
+    const btnClear = document.getElementById('btn-clear-pulpito-playlist');
+    if (btnClear) {
+        if (App.activeCatPulpito !== 'Todos' && App.pulpitoTab !== 'culto' && total > 0) {
+            btnClear.style.display = 'inline-flex';
+        } else {
+            btnClear.style.display = 'none';
+        }
+    }
 
     if (!total) {
         grid.innerHTML = `<div class="grid-empty-state">${App.pulpitoTab === 'culto' ? 'Nenhuma música no culto ainda.' : 'Nenhuma música encontrada.'}</div>`;
@@ -1018,6 +1035,33 @@ function toggleSongCategory(catName) {
     updateWelcomeStats();
     renderTecladoChips();
     renderSidebarPulpito();
+}
+
+// Esvaziar completamente uma categoria/playlist
+function clearPlaylistCore(catName) {
+    if (!catName || catName === 'Todos') return;
+    if (!confirm(`Tem certeza que deseja remover TODAS as músicas da playlist "${catName}"?`)) return;
+
+    App.allSongs.forEach(song => {
+        let types = (song.type || '').split(';').map(t => t.trim()).filter(Boolean);
+        if (types.includes(catName)) {
+            types = types.filter(t => t !== catName);
+            song.type = types.join(';');
+            if (!App.curadoriaData[song.id]) App.curadoriaData[song.id] = {};
+            App.curadoriaData[song.id].type = song.type;
+        }
+    });
+
+    saveCuradoria();
+    applyFiltersTeclado();
+    applyFiltersPulpito();
+    renderSidebarPulpito();
+    renderTecladoChips();
+    updateWelcomeStats();
+}
+
+function clearActivePlaylistPulpito() {
+    clearPlaylistCore(App.activeCatPulpito);
 }
 
 // Remover rapidamente uma música da playlist pela barra lateral
