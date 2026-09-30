@@ -13,7 +13,13 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <!-- Fuse.js para busca inteligente e tolerância a erros ortográficos (estilo CifrasCeros) -->
     <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
-    <link rel="stylesheet" href="style.css?v=1.5.0">
+    <script>
+        // Corrige bug do GitHub Pages com caminhos relativos de pastas
+        if (window.location.hostname.includes("github.io") && !window.location.pathname.endsWith('/')) {
+            window.location.replace(window.location.pathname + '/' + window.location.search + window.location.hash);
+        }
+    </script>
+    <link rel="stylesheet" href="./style.css?v=1.5.0">
 </head>
 <body>
     <div id="blob"></div>
