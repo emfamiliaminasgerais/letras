@@ -773,15 +773,6 @@ function renderPulpitoGrid() {
     if (ctxTit) ctxTit.textContent = App.activeCatPulpito === 'Todos' ? (App.pulpitoTab === 'culto' ? 'Músicas do Culto' : 'Todas as Músicas') : App.activeCatPulpito;
     if (ctxCnt) ctxCnt.textContent = `${total} músicas`;
 
-    const btnClear = document.getElementById('btn-clear-pulpito-playlist');
-    if (btnClear) {
-        if (App.activeCatPulpito !== 'Todos' && App.pulpitoTab !== 'culto' && total > 0) {
-            btnClear.style.display = 'inline-flex';
-        } else {
-            btnClear.style.display = 'none';
-        }
-    }
-
     if (!total) {
         grid.innerHTML = `<div class="grid-empty-state">${App.pulpitoTab === 'culto' ? 'Nenhuma música no culto ainda.' : 'Nenhuma música encontrada.'}</div>`;
         return;
@@ -1058,10 +1049,6 @@ function clearPlaylistCore(catName) {
     renderSidebarPulpito();
     renderTecladoChips();
     updateWelcomeStats();
-}
-
-function clearActivePlaylistPulpito() {
-    clearPlaylistCore(App.activeCatPulpito);
 }
 
 // Remover rapidamente uma música da playlist pela barra lateral
